@@ -105,13 +105,13 @@ ng serve
 
 - Projeto desenvolvido durante a graduação, parcialmente finalizado
 - Funcionalidades principais implementadas
-z- Continuará sendo aprimorado para portfólio profissional
+- Continuará sendo aprimorado para portfólio profissional
 
-z---
+---
 
-z## Contato
+## Contato
 
-zAugusto Mesquita França  
-z[LinkedIn](https://www.linkedin.com/in/augustofranca)  
-z[Email](mailto:augustofranca0701@gmail.com)
+Augusto Mesquita França  
+[LinkedIn](https://www.linkedin.com/in/augusto-franca-17a464234)  
+[Email](mailto:augustofranca0701@gmail.com)
 
