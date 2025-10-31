@@ -1,0 +1,30 @@
+.content {
+  text-align: justify;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 40px;
+  letter-spacing: 0.25px;
+}
+
+p {
+  font-size: 1.2em;
+}
+
+button[mat-flat-button] {
+  border-radius: 30px;
+  -webkit-border-radius: 30px;
+  -moz-border-radius: 30px;
+  -ms-border-radius: 30px;
+  -o-border-radius: 30px;
+  width: 100%;
+  background-color: #BF5C45;
+  color: white;
+  top: 50%;
+  height: 48px;
+  margin-top: 14px;
+}

@@ -1,0 +1,11 @@
+<div class="main" *ngFor="let boleto of boletos">
+
+  <div class="text">
+    <p>{{boleto.nomeGrupo}}: #{{boleto.id}} - {{boleto.dataVencimento}}</p>
+    <span>
+      <p style="font-size: 16px; font-weight: 500; color: #4CAF50;">PAGO</p>
+    </span>
+  </div>
+  <mat-divider style="margin-top: 24px; margin-bottom: 24px;"></mat-divider>
+
+</div>

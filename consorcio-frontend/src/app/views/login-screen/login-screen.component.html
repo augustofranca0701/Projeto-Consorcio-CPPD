@@ -1,0 +1,93 @@
+<div class="loading-screen">
+  <div class="loader">
+    <div class="loader-1 bar"></div>
+    <div class="loader-2 bar"></div>
+  </div>
+  <div class="counter">
+    <div class="counter-1 digit">
+      <div class="num">0</div>
+      <div class="num num1offset1">1</div>
+    </div>
+    <div class="counter-2 digit">
+      <div class="num">0</div>
+      <div class="num num1offset2">1</div>
+      <div class="num">2</div>
+      <div class="num">3</div>
+      <div class="num">4</div>
+      <div class="num">5</div>
+      <div class="num">6</div>
+      <div class="num">7</div>
+      <div class="num">8</div>
+      <div class="num">9</div>
+      <div class="num">0</div>
+    </div>
+    <div class="counter-3 digit">
+      <div class="num">0</div>
+      <div class="num">1</div>
+      <div class="num">2</div>
+      <div class="num">3</div>
+      <div class="num">4</div>
+      <div class="num">5</div>
+      <div class="num">6</div>
+      <div class="num">7</div>
+      <div class="num">8</div>
+      <div class="num">9</div>
+    </div>
+    <div class="counter-4 digit">
+      <div class="num">%</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="wrapper" >
+
+  <div class="banner">
+    <h2>Entrar</h2>
+    <p>Preencha com seu e-mail e senha para acessar</p>
+  </div>
+  <!-- Desktop form -->
+<div class="content">
+  <div class="form" fxLayout="column">
+    <form fxLayout="row wrap" fxLayoutAlign="space-between">
+      <div class="container">
+        <div class="form-field-login">
+          <p>E-mail</p>
+          <mat-form-field>
+            <input matInput
+                   placeholder="Digite seu e-mail"
+                   [formControl]="email"
+                   (blur)="updateErrorMessage()"
+                   required>
+            @if (email.invalid) {
+              <mat-error>{{errorMessage}}</mat-error>
+            }
+
+          </mat-form-field>
+          <p>Senha</p>
+          <mat-form-field>
+            <input matInput 
+            [type]="hide ? 'password' : 'text'" 
+            placeholder="Digite sua senha"
+            [formControl]="password"
+            required>
+            <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+              <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+
+    <!-- Botão -->
+    <div class="button">
+      <button mat-raised-button color="primary" style="box-shadow: none;" (click)="fazerLogin()">ENTRAR</button>
+    </div>
+
+    <div class="register-link">
+    <p>Ainda não tem uma conta?</p><button mat-button routerLink="/register" routerLinkActive="active">REGISTRAR</button>
+    </div>
+  </div>
+</div>
+
+</div>

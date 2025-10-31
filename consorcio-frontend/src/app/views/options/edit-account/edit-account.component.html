@@ -1,0 +1,33 @@
+<app-header-account-profile></app-header-account-profile>
+<div class="wrapper">
+
+  <div class="banner">
+    <h2>Editar Conta</h2>
+  </div>
+  <!-- Desktop form -->
+<div class="content">
+  <div class="form" fxLayout="column">
+    <form fxLayout="row wrap" fxLayoutAlign="space-between" #accountForm="ngForm">
+      <div class="container">
+        <div class="form-field-login">
+          <p>E-mail</p>
+          <mat-form-field>
+            <input matInput [formControl]="email" placeholder="Digite seu e-mail">
+            <mat-error *ngIf="email.hasError('required')">{{errorMessage}}</mat-error>
+              <mat-error *ngIf="email.hasError('email')">{{errorMessage}}</mat-error>
+              <mat-icon matSuffix>mode_edit</mat-icon>
+          </mat-form-field>
+          <p>Senha</p>
+          <mat-form-field>
+            <input matInput [type]="hide ? 'password' : 'text'" [formControl]="password">
+            <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+              <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div>

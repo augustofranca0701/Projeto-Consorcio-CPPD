@@ -1,0 +1,14 @@
+.content {
+  text-align: justify;
+}
+
+h1 {
+  font-size: 2em; /* Ajuste o valor conforme necessário */
+  font-weight: 500; /* Isso fará o texto mais pesado */
+}
+
+p {
+  font-size: 1.2em; /* Ajuste o valor conforme necessário */
+}	
+
+

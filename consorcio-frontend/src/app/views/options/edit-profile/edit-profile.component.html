@@ -1,0 +1,54 @@
+<app-header-account-profile></app-header-account-profile>
+<div class="wrapper">
+
+  <div class="banner">
+    <h2>Editar Perfil</h2>
+  </div>
+  <!-- Desktop form -->
+<div class="content">
+  <div class="form" fxLayout="column">
+    <form fxLayout="row wrap" fxLayoutAlign="space-between"  #profileForm="ngForm">
+      <div class="container">
+        <div class="form-field-login">
+          <p>Nome</p>
+          <mat-form-field>
+            <input matInput [formControl]="name">
+            <mat-icon matSuffix>mode_edit</mat-icon>
+          </mat-form-field>
+
+          <p>Telefone</p>
+          <mat-form-field>
+            <input type="tel" matInput [formControl]="phone">
+            <mat-icon matSuffix>mode_edit</mat-icon>
+          </mat-form-field>
+
+          <p>Endereço</p>
+          <mat-form-field>
+            <textarea matInput [formControl]="address"></textarea>
+            <mat-icon matSuffix>mode_edit</mat-icon>
+          </mat-form-field>
+
+          <p>Complemento</p>
+          <mat-form-field>
+            <textarea matInput [formControl]="complement"></textarea>
+            <mat-icon matSuffix>mode_edit</mat-icon>
+          </mat-form-field>
+
+          <p>Estado</p>
+          <mat-form-field>
+            <input matInput [formControl]="state">
+            <mat-icon matSuffix>mode_edit</mat-icon>
+          </mat-form-field>
+
+          <p>Cidade</p>
+          <mat-form-field>
+            <input matInput [formControl]="city">
+            <mat-icon matSuffix>mode_edit</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div>

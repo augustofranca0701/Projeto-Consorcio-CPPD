@@ -1,0 +1,36 @@
+<app-header-details-group></app-header-details-group>
+<app-banner
+[backgroundColor]="'#2B5278'"
+[title]="'Acompanhar Pagamentos '"
+></app-banner>
+<app-card>
+  <div class="content">
+    <h1>Resumo de Pagamentos</h1>
+    <span style="display: flex; justify-content: space-between; align-items: center;">
+      <p>Total Pago:</p>
+      <p>R${{ totalPaid | number: '1.2-2' }}</p>
+    </span>
+    <span style="display: flex; justify-content: space-between;">
+      <p>Total Pendente:</p>
+      <p>R${{ totalPending | number: '1.2-2' }}</p>
+    </span>
+    <span style="display: flex; justify-content: space-between;">
+      <p>Total Atrasado:</p>
+      <p>R${{ totalOverdue | number: '1.2-2' }}</p>
+    </span>
+  </div>
+</app-card>
+<app-card>
+  <div class="content">
+    <h1>Boletos</h1>
+    <div *ngIf="showFullList">
+      <app-not-paid [boletos]="allNotPaidBoletos"></app-not-paid>
+      <app-paid [boletos]="allPaidBoletos"></app-paid>
+    </div>
+    <div *ngIf="!showFullList">
+      <app-not-paid [boletos]="limitedNotPaidBoletos"></app-not-paid>
+      <app-paid [boletos]="limitedPaidBoletos"></app-paid>
+      <button class="start" mat-flat-button (click)="toggleShowAll()">VER TODOS</button>
+    </div>
+  </div>
+</app-card>

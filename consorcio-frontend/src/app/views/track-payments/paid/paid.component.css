@@ -1,0 +1,16 @@
+.text{
+  display: flex;
+  justify-content: space-between;
+}
+
+.text p{
+  font-size: 16px;
+}
+
+.main{
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 8px;
+}

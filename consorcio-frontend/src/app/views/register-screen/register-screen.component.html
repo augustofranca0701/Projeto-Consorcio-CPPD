@@ -1,0 +1,123 @@
+<div class="wrapper">
+  <div class="banner">
+    <h2>Registrar</h2>
+    <p>Registre-se gratuitamente para acessar o sistema</p>
+  </div>
+  <div class="container">
+    <form [formGroup]="signUpForm" (ngSubmit)="signUp">
+      <div class="form-register">
+        <mat-stepper #stepper linear>
+          <mat-step [stepControl]="firstFormGroup" errorMessage="Preencha essa etapa.">
+            <ng-template matStepLabel>E-mail e Senha</ng-template>
+            <p>E-mail</p>
+            <div class="form-field-register">
+              <mat-form-field>
+                <input matInput
+                       placeholder="Digite seu e-mail"
+                       formControlName="email"
+                       required>
+                <mat-error *ngIf="firstFormGroup.get('email')?.invalid">{{errorMessage}}</mat-error>
+              </mat-form-field>
+
+              <p>Senha</p>
+              <mat-form-field>
+                <input matInput [type]="hide ? 'password' : 'text'" placeholder="Digite sua senha" formControlName="password">
+                <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+                  <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                <mat-error *ngIf="firstFormGroup.get('password')?.invalid">Senha é obrigatória</mat-error>
+              </mat-form-field>
+
+              <p>Confirme a senha</p>
+              <mat-form-field>
+                <input matInput [type]="hide ? 'password' : 'text'" placeholder="Digite sua senha novamente" formControlName="confirmPassword">
+                <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+                  <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+                <mat-error *ngIf="firstFormGroup.get('confirmPassword')?.invalid">Confirmação de senha é obrigatória</mat-error>
+              </mat-form-field>
+            </div>
+            <div class="register-link-container">
+              <button mat-raised-button color="basic" matStepperNext style="box-shadow: none;">CONTINUAR</button>
+              <div class="register-link">
+                <p>Já possui uma conta?</p>
+                <button mat-button routerLink="/login" routerLinkActive="active">ENTRAR</button>
+              </div>
+            </div>
+          </mat-step>
+
+          <mat-step [stepControl]="secondFormGroup" errorMessage="Preencha essa etapa.">
+            <ng-template matStepLabel>Dados Pessoais</ng-template>
+            <div class="form-field-register">
+              <p>Nome Completo</p>
+              <mat-form-field>
+                <input matInput placeholder="Digite seu nome" formControlName="name">
+                <mat-error *ngIf="secondFormGroup.get('name')?.invalid">Nome é obrigatório</mat-error>
+              </mat-form-field>
+
+              <p>CPF</p>
+              <mat-form-field>
+                <input matInput placeholder="Digite seu CPF" formControlName="cpf">
+                <mat-error *ngIf="secondFormGroup.get('cpf')?.invalid">CPF é obrigatório</mat-error>
+              </mat-form-field>
+
+              <p>Telefone</p>
+              <mat-form-field>
+                <input matInput placeholder="Digite seu telefone com DDD" formControlName="phone">
+                <mat-error *ngIf="secondFormGroup.get('phone')?.invalid">Telefone é obrigatório</mat-error>
+              </mat-form-field>
+
+              <div class="space">
+                <button mat-raised-button color="accent" matStepperPrevious style="box-shadow: none;">VOLTAR</button>
+                <button mat-raised-button color="basic" matStepperNext style="box-shadow: none; margin-left: 14px;">CONTINUAR</button>
+              </div>
+            </div>
+          </mat-step>
+
+          <mat-step>
+            <ng-template matStepLabel>Seu Endereço</ng-template>
+            <div class="form-field-endereco">
+              <div>
+                <p>Cidade</p>
+                <mat-form-field>
+                  <input matInput placeholder="Digite sua cidade" formControlName="city">
+                  <mat-error *ngIf="secondFormGroup.get('city')?.invalid">Cidade é obrigatória</mat-error>
+                </mat-form-field>
+              </div>
+              <div>
+                <p>Estado</p>
+                <mat-form-field>
+                  <input matInput placeholder="Digite seu estado" formControlName="state">
+                  <mat-error *ngIf="secondFormGroup.get('state')?.invalid">Estado é obrigatório</mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="form-field-endereco">
+
+            </div>
+            <div class="form-field-register">
+                <p>Complemento</p>
+                <mat-form-field>
+                  <input matInput placeholder="Digite seu complemento" formControlName="complement">
+                  <mat-error *ngIf="secondFormGroup.get('complement')?.invalid">Complemento é obrigatório</mat-error>
+                </mat-form-field>
+              </div>
+              <div class="form-field-register">
+              <p>Endereço</p>
+              <mat-form-field>
+                <input matInput placeholder="Digite seu endereço" formControlName="address">
+                <mat-error *ngIf="secondFormGroup.get('address')?.invalid">Endereço é obrigatório</mat-error>
+              </mat-form-field>
+            </div>
+            <div class="form-field-register">
+              <div class="space">
+                <button mat-raised-button color="accent" matStepperPrevious style="box-shadow: none;">VOLTAR</button>
+                <button mat-raised-button color="basic" (click)="signUp()" style="margin-left: 14px; box-shadow: none;">FINALIZAR</button>
+              </div>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      </div>
+    </form>
+  </div>
+</div>

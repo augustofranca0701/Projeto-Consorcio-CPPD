@@ -1,0 +1,81 @@
+<div class="container" id="header">
+  <img class="backgroung-img" src="../assets/imagebackground.jpeg" alt="">
+  <div class="info">
+    <h1>CPPD</h1>
+    <h2 class="mat-headline-5 info-h2">Consórcio - O Caminho Inteligente para Realizar Seus Sonhos!</h2>
+    <p class="info-p">
+      Com nossa plataforma você terá controle total sobre suas finanças e poderá participar de um sistema colaborativo
+      para realizar seus projetos de forma planejada e eficiente.
+    </p>
+    <p class="info-p">Junte-se a nós e transforme seus sonhos em realidade hoje mesmo!</p>
+    <button (click)="scrollToSection()" class="start" mat-flat-button style="background-color: #BF5C45; color: #F6EFDC; min-width: 208px;">Começar</button>
+  </div>
+  <svg class="seta" (click)="scrollToSection()" xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 90 90" fill="none">
+    <path d="M48.7499 59.0362L63.5624 44.2237C63.9084 43.8656 64.3222 43.5799 64.7797 43.3834C65.2372 43.1868 65.7293 43.0834 66.2272 43.0791C66.7251 43.0747 67.2189 43.1696 67.6798 43.3582C68.1406 43.5467 68.5593 43.8252 68.9114 44.1773C69.2635 44.5294 69.542 44.9481 69.7305 45.4089C69.9191 45.8698 70.014 46.3636 70.0096 46.8615C70.0053 47.3594 69.9019 47.8515 69.7053 48.309C69.5088 48.7665 69.2231 49.1803 68.8649 49.5262L47.6512 70.74C47.3037 71.0894 46.8906 71.3667 46.4356 71.556C45.9806 71.7452 45.4927 71.8426 44.9999 71.8426C44.5072 71.8426 44.0192 71.7452 43.5642 71.556C43.1092 71.3667 42.6961 71.0894 42.3487 70.74L21.1349 49.5262C20.7768 49.1803 20.4911 48.7665 20.2946 48.309C20.098 47.8515 19.9946 47.3594 19.9903 46.8615C19.9859 46.3636 20.0808 45.8698 20.2694 45.4089C20.4579 44.9481 20.7364 44.5294 21.0885 44.1773C21.4406 43.8252 21.8593 43.5467 22.3201 43.3582C22.781 43.1696 23.2748 43.0747 23.7727 43.0791C24.2706 43.0834 24.7627 43.1868 25.2202 43.3834C25.6777 43.5799 26.0915 43.8656 26.4374 44.2237L41.2499 59.0362V23.0887C41.2499 22.0942 41.645 21.1404 42.3483 20.4371C43.0516 19.7338 44.0054 19.3387 44.9999 19.3387C45.9945 19.3387 46.9483 19.7338 47.6516 20.4371C48.3549 21.1404 48.7499 22.0942 48.7499 23.0887V59.0362Z" fill="#F6EFDC"/>
+  </svg>
+</div>
+<div class="conteudo">
+  <div class="category" id="category">
+    <h4>CATEGORIAS</h4>
+  </div>
+  <section class="categorias">
+    <mat-button-toggle-group [(ngModel)]="filterCategory" aria-label="Filter Category">
+      <mat-button-toggle value="all" id="filterAll" class="custom-toggle">TODOS</mat-button-toggle>
+      <mat-button-toggle value="500" id="filter500" class="custom-toggle">ATÉ R$500,00</mat-button-toggle>
+      <mat-button-toggle value="1000" id="filter1000" class="custom-toggle">ATÉ R$1.000,00</mat-button-toggle>
+      <mat-button-toggle value="5000" id="filter5000" class="custom-toggle">ATÉ R$5.000,00</mat-button-toggle>
+      <mat-button-toggle value="10000" id="filter10000" class="custom-toggle">ATÉ R$10.000,00</mat-button-toggle>
+    </mat-button-toggle-group>
+    <!--
+    <p>Chosen value is {{filterCategory}}</p>
+    -->
+  </section>
+  <div class="cards">
+    <app-card-groups-consortium
+      max_price="500"
+      title="Consórcio Compartilhado"
+      totalCreditos="R$ 300,00"
+      valorParcelas="R$ 50,00"
+      totalParcelas="6"
+      backgroundColor="#C0C0C0"
+    ></app-card-groups-consortium>
+    <app-card-groups-consortium max_price="10000" title="Consórcio da Galera"
+    totalCreditos="R$ 10.000,00" valorParcelas="R$ 500,00" totalParcelas="20"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+
+  <app-card-groups-consortium max_price="500" title="Grupo de Poupança Coletiva"
+    totalCreditos="R$ 500,00" valorParcelas="R$ 100,00" totalParcelas="5"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+    <app-card-groups-consortium max_price="1000" title="Consórcio CPPD "
+    totalCreditos="R$ 1.000,00" valorParcelas="R$ 100,00" totalParcelas="10"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+    <app-card-groups-consortium max_price="4000" title="Consórcio Risca Telha "
+    totalCreditos="R$ 4.000,00" valorParcelas="R$ 400,00" totalParcelas="10"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+
+
+
+
+    <app-card-groups-consortium
+      max_price="5000"
+      title="Consórcio Dos Amigos"
+      totalCreditos="R$ 5000,00"
+      valorParcelas="R$ 500,00"
+      totalParcelas="10"
+      backgroundColor="#C0C0C0"
+    ></app-card-groups-consortium>
+    <app-card-groups-consortium max_price="2500" title="Consórcio Chega Junto"
+    totalCreditos="R$ 2.500,00" valorParcelas="R$ 250,00" totalParcelas="10"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+  <app-card-groups-consortium max_price="800" title="Grupo de Poupança da Familia"
+    totalCreditos="R$ 800,00" valorParcelas="R$ 200,00" totalParcelas="4"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+    <app-card-groups-consortium max_price="10000" title="Consórcio Souza "
+    totalCreditos="R$ 10.000,00" valorParcelas="R$ 100,00" totalParcelas="10"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+    <app-card-groups-consortium max_price="9000" title="Consórcio Mão na Grana "
+    totalCreditos="R$ 9.000,00" valorParcelas="R$ 750,00" totalParcelas="12"
+    backgroundColor="#C0C0C0"></app-card-groups-consortium>
+  </div>
+</div>
+

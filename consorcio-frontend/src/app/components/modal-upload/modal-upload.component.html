@@ -1,0 +1,19 @@
+<div class="dialog-container">
+<div mat-dialog-content>
+  <div class="modalUpload">
+    <div class="uploadCard" style="cursor: pointer;" (click)="onUploadCardClick()"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <path d="M21.414 10.586C21.2287 10.3996 21.0084 10.2517 20.7657 10.1508C20.523 10.0499 20.2628 9.99793 20 9.99793C19.7372 9.99793 19.477 10.0499 19.2343 10.1508C18.9916 10.2517 18.7713 10.3996 18.586 10.586L10.1 19.072C9.73569 19.4492 9.5341 19.9544 9.53865 20.4788C9.54321 21.0032 9.75355 21.5048 10.1244 21.8756C10.4952 22.2465 10.9968 22.4568 11.5212 22.4613C12.0456 22.4659 12.5508 22.2643 12.928 21.9L18 16.828V28C18 28.5304 18.2107 29.0391 18.5858 29.4142C18.9609 29.7893 19.4696 30 20 30C20.5304 30 21.0391 29.7893 21.4142 29.4142C21.7893 29.0391 22 28.5304 22 28V16.828L27.072 21.9C27.4492 22.2643 27.9544 22.4659 28.4788 22.4613C29.0032 22.4568 29.5048 22.2465 29.8756 21.8756C30.2465 21.5048 30.4568 21.0032 30.4614 20.4788C30.4659 19.9544 30.2643 19.4492 29.9 19.072L21.414 10.586ZM20 40C8.954 40 0 31.046 0 20C0 8.954 8.954 0 20 0C31.046 0 40 8.954 40 20C40 31.046 31.046 40 20 40Z" fill="#616161"/>
+    </svg></div>
+
+    <input type="file" id="fileInput" style="display: none;" (change)="onFileSelected($event)" accept=".png, .jpg, .jpeg, .pdf" />
+    <p style="padding-bottom: 12px;" *ngIf="selectedFile">Arquivo selecionado: {{ selectedFile.name }}</p>
+
+
+    <p>Arraste e solte o arquivo que você quer enviar</p>
+    <p style="color: #757575;">(ou clique no ícone para encontrar e abrir o arquivo)</p>
+  </div>
+  <div mat-dialog-actions class="modalIdGrupo">
+    <button mat-button mat-dialog-close style="background-color: #A52E45; color: white;">CANCELAR</button>
+    <button mat-button cdkFocusInitial class="btn-verificar" style="background-color: #BF5C45; color: white;" (click)="enviarPagamento()">ENVIAR</button>
+  </div>
+</div>

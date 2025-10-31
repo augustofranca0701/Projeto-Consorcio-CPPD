@@ -1,0 +1,139 @@
+/*NAVBAR*/
+
+.navbar {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 350px;
+  height: 48px;
+  padding: 8px 24px;
+  border-radius: 60px;
+  border: 1px solid var(--Cinza-grey---darken-1);
+  background: var(--Trigo-Trigo---lighten-4, #FCFBFA);
+  box-shadow: 0px 7px 11px 0px rgba(0, 0, 0, 0.13);
+  z-index: 55;
+  -webkit-border-radius: 60px;
+  -moz-border-radius: 60px;
+  -ms-border-radius: 60px;
+  -o-border-radius: 60px;
+}
+
+
+.navbar a {
+  color: #212121;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.navbar a:hover {
+  color: #E56849 !important;
+}
+
+.nav-mobile{
+  display: none;
+}
+
+@media (max-width: 768px) {
+
+.navbar{
+  display: none;
+}
+
+.center{
+  display: flex;
+  padding: 4px 8px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.nav-mobile{
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  width: 80%;
+  height: 34px;
+  padding: 15px 16px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 30px;
+  border: 1px solid var(--Cinza-grey---darken-1, #757575);
+  background: var(--Trigo-Trigo---lighten-4, #FCFBFA);
+  box-shadow: 0px 7px 11px 0px rgba(0, 0, 0, 0.13);
+  z-index: 56;
+}
+
+.nav-mobile a{
+  color: var(--Cinza-grey---darken-4, #212121);
+  font-family: Roboto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%;
+  text-decoration: none;
+}
+
+.nav-mobile a:hover {
+  color: #E56849 !important;
+}
+
+}
+/*NAVBAR*/
+
+/*FOOTER*/
+
+.footer {
+  margin-top: 14vh !important;
+  width: 100%;
+  padding: 1.5rem 0;
+  background-color: #EAD8B1;
+  text-align: center;
+}
+
+
+.footer p {
+display: block;
+margin-block-start: 1em;
+margin-block-end: 1em;
+margin-inline-start: 0px;
+margin-inline-end: 0px;
+padding-bottom: 90px;
+}
+
+.distancia{
+  padding-top: 32px;
+}
+
+/*FOOTER*/
+
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+}
+
+@media (max-width: 768px) {
+  .wrapper{
+    height: 1vh;
+  }
+  .footer {
+    margin-top: 10vh; /* Ajusta automaticamente a margem superior para empurrar o footer para a parte inferior */
+    width: 100%;
+    padding: 1rem 0;
+    background-color: #EAD8B1;
+    text-align: center;
+  }
+}
+
+
