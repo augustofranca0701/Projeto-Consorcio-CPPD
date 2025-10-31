@@ -47,23 +47,25 @@ Repositório do projeto **Consórcio CPPD**, desenvolvido como trabalho integrad
 
 ## Estrutura do Projeto
 
+```
 Consorcio-CPPD/
-├── api-consorcio/ # Backend Java Spring Boot
-│ ├── src/
-│ │ ├── main/
-│ │ │ ├── java/com/consorcio/api/Controller
-│ │ │ ├── java/com/consorcio/api/Service
-│ │ │ ├── java/com/consorcio/api/Repository
-│ │ │ ├── java/com/consorcio/api/Model
-│ │ │ └── resources/application.yml
-│ └── pom.xml
+├── api-consorcio/      # Backend Java Spring Boot
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/consorcio/api/Controller
+│   │   │   ├── java/com/consorcio/api/Service
+│   │   │   ├── java/com/consorcio/api/Repository
+│   │   │   ├── java/com/consorcio/api/Model
+│   │   │   └── resources/application.yml
+│   └── pom.xml
 └── consorcio-frontend/ # Frontend Angular
-├── src/app/
-│ ├── components/
-│ ├── services/
-│ └── views/
-├── src/assets/
-└── angular.json
+    ├── src/app/
+    │   ├── components/
+    │   ├── services/
+    │   └── views/
+    ├── src/assets/
+    └── angular.json
+```
 
 ---
 
