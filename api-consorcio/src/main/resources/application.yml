@@ -4,7 +4,7 @@ spring:
     datasource:
         url: jdbc:postgresql://localhost:5432/consorcio
         username: postgres
-        password: 132022
+        password: guardachuva
     jpa:
         database: POSTGRESQL
         generate-ddl: true
