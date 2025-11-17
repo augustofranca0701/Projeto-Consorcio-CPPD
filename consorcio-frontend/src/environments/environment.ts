@@ -1,5 +1,4 @@
-import { ApiService } from "../app/services/api.service";
-
 export const environment = {
-  api: '',
+  production: true,
+  api: '/api',
 };

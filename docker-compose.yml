@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: consorcio_db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./api-consorcio
+      dockerfile: Dockerfile
+    container_name: consorcio_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    command:
+      [
+        "java",
+        "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}",
+        "-jar",
+        "app.jar",
+      ]
+
+  frontend_dev:
+    profiles: ["dev"]
+    build:
+      context: ./consorcio-frontend
+      dockerfile: Dockerfile.dev
+    container_name: consorcio_frontend_dev
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./consorcio-frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+  frontend_prod:
+    profiles: ["prod"]
+    build:
+      context: ./consorcio-frontend
+      dockerfile: Dockerfile.prod
+    container_name: consorcio_frontend_prod
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

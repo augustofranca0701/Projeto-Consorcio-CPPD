@@ -1,0 +1,31 @@
+# ---- SISTEMA OPERACIONAL ----
+.DS_Store
+Thumbs.db
+
+# ---- IDE / EDITOR ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- SCRIPTS TEMPORÁRIOS ----
+*.log
+
+# ---- DOCKER ----
+# Não ignorar docker-compose.yml nem Dockerfile dos subprojetos
+# mas ignorar arquivos gerados automaticamente
+*.pid
+
+# ---- ANGULAR FRONTEND ----
+consorcio-frontend/node_modules/
+consorcio-frontend/dist/
+consorcio-frontend/.angular/cache/
+
+# ---- MAVEN / JAVA BACKEND ----
+api-consorcio/target/
+api-consorcio/.mvn/wrapper/maven-wrapper.jar
+
+# ---- AMBIENTES / VARIÁVEIS ----
+api-consorcio/.env
+consorcio-frontend/.env
+*.env
