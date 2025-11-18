@@ -11,13 +11,16 @@ import { TrackPaymentsComponent } from './views/track-payments/track-payments.co
 import {OptionsComponent} from "./views/options/options.component";
 import { EditAccountComponent } from './views/options/edit-account/edit-account.component';
 import { EditProfileComponent } from './views/options/edit-profile/edit-profile.component';
+import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
+import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 
 
 export const routes: Routes = [
+  { path: '',
+    component: MainLayoutComponent,
+    children: [
   { path: '', component: HomeComponent },
   { path: 'create-groups', component: CreateGroupsComponent},
-  { path: 'register', component: RegisterScreenComponent},
-  { path: 'login', component: LoginScreenComponent},
   { path: 'detalhes-do-grupo', component: DetalhesDoGrupoComponent},
   { path: 'detalhes-do-grupo-usuario', component: DetalhesDoGrupoUsuarioComponent},
   { path: 'consortium-details', component: ConsortiumDetailsComponent },
@@ -26,6 +29,16 @@ export const routes: Routes = [
   { path: 'options', component: OptionsComponent },
   { path: 'edit-account', component: EditAccountComponent },
   { path: 'edit-profile', component: EditProfileComponent }
-  ];
+  ]
+  },
+  {
+    path: '',
+    component: AuthLayoutComponent,
+    children: [
+      { path: 'login', component: LoginScreenComponent },
+      { path: 'register', component: RegisterScreenComponent }
+    ]
+  },
+  { path: '**', redirectTo: '' }
+];
 
-export class AppRoutingModule { }
