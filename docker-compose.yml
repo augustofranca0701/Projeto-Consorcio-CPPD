@@ -50,10 +50,12 @@ services:
     ports:
       - "4200:4200"
     volumes:
-      - ./consorcio-frontend:/app
+      - ./consorcio-frontend:/app:delegated
       - /app/node_modules
+    command: ["npm", "run", "start", "--", "--host", "0.0.0.0", "--poll=2000"]
     depends_on:
       - api
+
 
   frontend_prod:
     profiles: ["prod"]

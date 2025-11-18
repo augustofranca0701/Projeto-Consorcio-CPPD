@@ -1,0 +1,48 @@
+<nav class="navbar">
+  <a routerLink="/"
+     routerLinkActive="active"
+     [routerLinkActiveOptions]="{ exact: true }">Início</a>
+
+  <a routerLink="/my-groups"
+     routerLinkActive="active">Grupos</a>
+
+  <a routerLink="/track-payments"
+     routerLinkActive="active">Faturas</a>
+
+  <a routerLink="/options"
+     routerLinkActive="active">Opções</a>
+</nav>
+
+<nav class="nav-mobile">
+
+  <div class="center">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+      <path d="M20 20.5V9.63205L12 4.83205L4 9.63205V20.5H8V17.7501C8...Z" fill="#212121"/>
+    </svg>
+    <a routerLink="/"
+       routerLinkActive="active"
+       [routerLinkActiveOptions]="{ exact: true }">Início</a>
+  </div>
+
+  <div class="center">
+    <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+      <path d="M6.034 13.07C6...Z" fill="#212121"/>
+    </svg>
+    <a routerLink="/my-groups" routerLinkActive="active">Grupos</a>
+  </div>
+
+  <div class="center">
+    <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+      <path d="M7.5 2.5H17.5C18...Z" fill="#212121"/>
+    </svg>
+    <a routerLink="/track-payments" routerLinkActive="active">Faturas</a>
+  </div>
+
+  <div class="center">
+    <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+      <path d="M6.5 7.5H11.5C11...Z" fill="#212121"/>
+    </svg>
+    <a routerLink="/options" routerLinkActive="active">Opções</a>
+  </div>
+
+</nav>

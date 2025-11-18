@@ -1,0 +1,32 @@
+/*FOOTER*/
+.footer {
+  margin-top: 14vh !important;
+  width: 100%;
+  padding: 1.5rem 0;
+  background-color: #EAD8B1;
+  text-align: center;
+}
+
+.footer p {
+display: block;
+margin-block-start: 1em;
+margin-block-end: 1em;
+margin-inline-start: 0px;
+margin-inline-end: 0px;
+padding-bottom: 90px;
+}
+
+.distancia{
+  padding-top: 32px;
+}
+
+/*FOOTER*/
+@media (max-width: 768px) {
+  .footer {
+    margin-top: 10vh; /* Ajusta automaticamente a margem superior para empurrar o footer para a parte inferior */
+    width: 100%;
+    padding: 1rem 0;
+    background-color: #EAD8B1;
+    text-align: center;
+  }
+}

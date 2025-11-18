@@ -23,7 +23,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   users: any[] = [];
 
   constructor(
-    private visibilityService: VisibilityService,
     private apiService: ApiService, // Certifique-se que a injeção está correta
     private cdr: ChangeDetectorRef
   ) {
@@ -40,7 +39,4 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges(); // Marcando mudanças para evitar ExpressionChangedAfterItHasBeenCheckedError
   }
 
-  public getShowComponent(): boolean {
-    return this.visibilityService.getShowComponent();
-  }
 }
