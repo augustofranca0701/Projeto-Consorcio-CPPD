@@ -1,5 +1,4 @@
 /*FOOTER*/
-
 .footer {
   margin-top: 14vh !important;
   width: 100%;
@@ -7,7 +6,6 @@
   background-color: #EAD8B1;
   text-align: center;
 }
-
 
 .footer p {
 display: block;
@@ -23,14 +21,7 @@ padding-bottom: 90px;
 }
 
 /*FOOTER*/
-
-
-
-
 @media (max-width: 768px) {
-  .wrapper{
-    height: 1vh;
-  }
   .footer {
     margin-top: 10vh; /* Ajusta automaticamente a margem superior para empurrar o footer para a parte inferior */
     width: 100%;
