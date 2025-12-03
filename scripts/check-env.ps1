@@ -1,15 +1,17 @@
-$envPath = Join-Path $PSScriptRoot "..\.env"
-$envExample = Join-Path $PSScriptRoot "..\api-consorcio\env.example"
+# scripts\check-env.ps1
+$repoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Definition)
+$envPath = Join-Path $repoRoot ".env"
+$envExample = Join-Path $repoRoot "api-consorcio\env.example"
 
 if (-not (Test-Path $envPath)) {
-    Write-Host ".env não encontrado. Criando a partir de env.example..." -ForegroundColor Yellow
-
-    if (-not (Test-Path $envExample)) {
-        Write-Host "ERRO: env.example não encontrado. Crie o .env manualmente." -ForegroundColor Red
+    if (Test-Path $envExample) {
+        Write-Host ".env nao encontrado. Criando a partir de api-consorcio/env.example..." -ForegroundColor Yellow
+        Copy-Item $envExample $envPath -Force
+        Write-Host ".env criado." -ForegroundColor Green
+    } else {
+        Write-Host "env.example nao encontrado em api-consorcio. Crie .env manualmente." -ForegroundColor Red
         exit 1
     }
-
-    Copy-Item $envExample $envPath
+} else {
+    Write-Host ".env OK." -ForegroundColor Green
 }
-
-Write-Host ".env OK." -ForegroundColor Green

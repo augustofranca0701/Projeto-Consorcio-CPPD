@@ -1,4 +1,12 @@
+# consorcio-frontend/Dockerfile.dev
 FROM node:20-alpine
+
+ARG USER=node
+
+# criar user somente se nao existir (evita erro se 'node' já existe)
+RUN if ! id -u ${USER} >/dev/null 2>&1 ; then \
+      addgroup -S ${USER} && adduser -S ${USER} -G ${USER} ; \
+    fi
 
 WORKDIR /app
 
@@ -9,5 +17,7 @@ COPY . .
 
 EXPOSE 4200
 
-# HOST=0.0.0.0 permite acessar via navegador local
+# usar user não-root (se existir)
+USER ${USER}
+
 CMD ["npm", "run", "start", "--", "--host", "0.0.0.0"]
