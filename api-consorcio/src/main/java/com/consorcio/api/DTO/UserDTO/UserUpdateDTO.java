@@ -1,4 +1,4 @@
-package com.consorcio.api.DTO.UserDTO;
+package com.consorcio.api.dto.UserDTO;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;

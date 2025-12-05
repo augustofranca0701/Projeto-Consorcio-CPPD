@@ -1,11 +1,11 @@
-package com.consorcio.api.Service;
+package com.consorcio.api.service;
 
-import com.consorcio.api.DTO.UserDTO.UserLoginDTO;
-import com.consorcio.api.DTO.UserDTO.UserLoginUpdateDTO;
-import com.consorcio.api.DTO.UserDTO.UserUpdateDTO;
-import com.consorcio.api.Model.GroupModel;
-import com.consorcio.api.Model.UserModel;
-import com.consorcio.api.Repository.UserRepository;
+import com.consorcio.api.dto.UserDTO.UserLoginDTO;
+import com.consorcio.api.dto.UserDTO.UserLoginUpdateDTO;
+import com.consorcio.api.dto.UserDTO.UserUpdateDTO;
+import com.consorcio.api.model.GroupModel;
+import com.consorcio.api.model.UserModel;
+import com.consorcio.api.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,8 +43,14 @@ public class UserService
     @Transactional
     public ResponseEntity<Object> login(UserLoginDTO user) {
         try {
-            UserModel existingUser = userRepository.findByEmail(user.getEmail());
-            if (existingUser == null || !existingUser.getPassword().equals(user.getPassword())) {
+            Optional<UserModel> opt = userRepository.findByEmail(user.getEmail());
+            if (opt.isEmpty()) {
+                return generateErrorResponse(401, "User or password is incorrect.");
+            }
+            UserModel existingUser = opt.get();
+            // OBS: aqui você provavelmente quer comparar senha com encoder ( BCrypt ), mas
+            // esse método é um fallback simples. Se guardar senha criptografada, use passwordEncoder.matches(...)
+            if (existingUser.getPassword() == null || !existingUser.getPassword().equals(user.getPassword())) {
                 return generateErrorResponse(401, "User or password is incorrect.");
             }
 
@@ -216,6 +222,4 @@ public class UserService
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 }

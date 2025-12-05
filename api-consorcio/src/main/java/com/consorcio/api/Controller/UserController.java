@@ -1,69 +1,74 @@
-package com.consorcio.api.Controller;
+package com.consorcio.api.controller;
 
-import com.consorcio.api.DTO.UserDTO.UserLoginDTO;
-import com.consorcio.api.DTO.UserDTO.UserLoginUpdateDTO;
-import com.consorcio.api.DTO.UserDTO.UserUpdateDTO;
-import com.consorcio.api.Model.UserModel;
-import com.consorcio.api.Service.UserService;
+import com.consorcio.api.dto.UserDTO.RegisterDTO;
+import com.consorcio.api.dto.UserDTO.UserLoginDTO;
+import com.consorcio.api.model.UserModel;
+import com.consorcio.api.repository.UserRepository;
+import com.consorcio.api.security.JwtUtil;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("users")
-public class UserController
-{
-    @Autowired
-    private UserService userService;
+@RequestMapping("/api")
+public class UserController {
 
-    @PostMapping("signup")
-    public ResponseEntity<Object> signup(@RequestBody @Valid UserModel user)
-    {
-        return userService.create(user);
+    private final UserRepository userRepo;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
+    public UserController(UserRepository userRepo,
+                          PasswordEncoder passwordEncoder,
+                          AuthenticationManager authenticationManager,
+                          JwtUtil jwtUtil) {
+        this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
-    @PostMapping("login")
-    public ResponseEntity<Object> login(@RequestBody @Valid UserLoginDTO user)
-    {
-        return userService.login(user);
+    @PostMapping("/auth/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto) {
+        if (dto.getEmail() == null || dto.getPassword() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "email_e_senha_obrigatorios"));
+        }
+
+        if (userRepo.existsByEmailIgnoreCase(dto.getEmail())) {
+            return ResponseEntity.status(409).body(Map.of("error", "email_existente"));
+        }
+
+        UserModel user = new UserModel();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail().toLowerCase().trim());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setCpf(dto.getCpf());
+        user.setPhone(dto.getPhone());
+
+        userRepo.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "usuario_criado"));
     }
 
-    @GetMapping("")
-    public List<UserModel> readUsers() throws Exception
-    {
-        return userService.readUsers();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Object> readUserById(@PathVariable("id") Long id) throws Exception
-    {
-        return userService.readById(id);
-    }
-
-    @GetMapping("/{userId}/groups")
-    public ResponseEntity<Object> getUserGroups(@PathVariable("userId") Long userId) throws Exception
-    {
-        return userService.getUserGroups(userId);
-    }
-
-    @PutMapping("/{id}/update")
-    public ResponseEntity<Object> update(@PathVariable("id") Long id, @RequestBody @Valid UserUpdateDTO user) throws Exception
-    {
-        return userService.update(user, id);
-    }
-
-    @PutMapping("/{id}/updatelogin")
-    public ResponseEntity<Object> updateLogin(@PathVariable("id") Long id, @RequestBody @Valid UserLoginUpdateDTO user) throws Exception
-    {
-        return userService.updateLogin(user, id);
-    }
-
-    @DeleteMapping("/{id}/delete")
-    public ResponseEntity<Object> delete(@PathVariable("id") Long id) throws Exception
-    {
-        return userService.delete(id);
+    @PostMapping("/auth/login")
+    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO dto) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = jwtUtil.generateToken(dto.getEmail());
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (BadCredentialsException ex) {
+            return ResponseEntity.status(401).body(Map.of("error", "credenciais_invalidas"));
+        }
     }
 }

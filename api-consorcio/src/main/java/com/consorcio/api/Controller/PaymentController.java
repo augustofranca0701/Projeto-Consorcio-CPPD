@@ -1,6 +1,6 @@
-package com.consorcio.api.Controller;
+package com.consorcio.api.controller;
 
-import com.consorcio.api.Service.PaymentService;
+import com.consorcio.api.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

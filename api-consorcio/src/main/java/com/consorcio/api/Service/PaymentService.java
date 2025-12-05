@@ -1,11 +1,11 @@
-package com.consorcio.api.Service;
+package com.consorcio.api.service;
 
-import com.consorcio.api.DTO.UserDTO.PaymentDTO;
-import com.consorcio.api.Model.GroupModel;
-import com.consorcio.api.Model.PaymentModel;
-import com.consorcio.api.Model.UserModel;
-import com.consorcio.api.Repository.PaymentRepository;
-import com.consorcio.api.Repository.UserRepository;
+import com.consorcio.api.dto.UserDTO.PaymentDTO;
+import com.consorcio.api.model.GroupModel;
+import com.consorcio.api.model.PaymentModel;
+import com.consorcio.api.model.UserModel;
+import com.consorcio.api.repository.PaymentRepository;
+import com.consorcio.api.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,6 @@ public class PaymentService
             payment.setValor(valor);
             payment.setIsPaid(false);
 
-            // Set the GrupoModel object (JPA handles the foreign key)
             payment.setGroup(group);
             payment.setUser(user);
 
@@ -58,13 +58,13 @@ public class PaymentService
     {
         try
         {
-            String sql = """                        
+            String sql = """
                         SELECT
                             p.id,
                             p.data_vencimento,
                             p.valor,
                             p.is_paid,
-                            g.name nome_grupo
+                            g.name as nome_grupo
                         FROM
                             payments p
                         LEFT JOIN users u ON u.id = p.user_id
@@ -75,10 +75,22 @@ public class PaymentService
                             p.data_vencimento;
                         """;
 
-            Query query = entityManager.createNativeQuery(sql, PaymentDTO.class);
+            Query query = entityManager.createNativeQuery(sql);
             query.setParameter(1, userId);
 
-            List<PaymentDTO> userPayments = query.getResultList();
+            @SuppressWarnings("unchecked")
+            List<Object[]> rows = query.getResultList();
+
+            List<PaymentDTO> userPayments = new ArrayList<>();
+            for (Object[] row : rows) {
+                Long id = row[0] != null ? ((Number) row[0]).longValue() : null;
+                java.sql.Date sqlDate = (java.sql.Date) row[1];
+                java.util.Date dataVencimento = sqlDate != null ? new java.util.Date(sqlDate.getTime()) : null;
+                Long valor = row[2] != null ? ((Number) row[2]).longValue() : null;
+                Boolean isPaid = row[3] != null ? (Boolean) row[3] : Boolean.FALSE;
+                String nomeGrupo = row[4] != null ? row[4].toString() : null;
+                userPayments.add(new PaymentDTO(id, dataVencimento, valor, isPaid, nomeGrupo));
+            }
 
             return new ResponseEntity<>(userPayments, HttpStatus.OK);
         }
@@ -117,7 +129,6 @@ public class PaymentService
         }
         catch (EntityNotFoundException e)
         {
-            // Handle EntityNotFoundExceptions specifically
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 404);
             errorResponse.put("message", e.getMessage());
@@ -125,7 +136,6 @@ public class PaymentService
         }
         catch (Exception e)
         {
-            // Handle other exceptions generically
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 500);
             errorResponse.put("message", "An error occurred while updating the payment.");

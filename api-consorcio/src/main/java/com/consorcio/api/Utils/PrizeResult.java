@@ -1,17 +1,37 @@
-package com.consorcio.api.Utils;
+package com.consorcio.api.utils;
 
-import com.consorcio.api.Model.PrizeModel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.consorcio.api.model.PrizeModel;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class PrizeResult
-{
+import java.util.List;
+
+public class PrizeResult {
+
     private PrizeModel prize;
-    private String message;
+    private List<PrizeModel> prizes;
+
+    public PrizeResult() {}
+
+    public PrizeResult(PrizeModel prize) {
+        this.prize = prize;
+    }
+
+    public PrizeResult(List<PrizeModel> prizes) {
+        this.prizes = prizes;
+    }
+
+    public PrizeModel getPrize() {
+        return prize;
+    }
+
+    public void setPrize(PrizeModel prize) {
+        this.prize = prize;
+    }
+
+    public List<PrizeModel> getPrizes() {
+        return prizes;
+    }
+
+    public void setPrizes(List<PrizeModel> prizes) {
+        this.prizes = prizes;
+    }
 }
