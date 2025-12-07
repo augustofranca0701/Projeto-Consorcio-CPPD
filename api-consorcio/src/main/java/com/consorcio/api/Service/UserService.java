@@ -18,21 +18,17 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-public class UserService
-{
+public class UserService {
+
     @Autowired
     private UserRepository userRepository;
 
     @Transactional
-    public ResponseEntity<Object> create(UserModel user)
-    {
-        try
-        {
+    public ResponseEntity<Object> create(UserModel user) {
+        try {
             userRepository.save(user);
             return new ResponseEntity<>(user, HttpStatus.OK);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 500);
             errorResponse.put("message", e.getMessage());
@@ -48,8 +44,7 @@ public class UserService
                 return generateErrorResponse(401, "User or password is incorrect.");
             }
             UserModel existingUser = opt.get();
-            // OBS: aqui você provavelmente quer comparar senha com encoder ( BCrypt ), mas
-            // esse método é um fallback simples. Se guardar senha criptografada, use passwordEncoder.matches(...)
+
             if (existingUser.getPassword() == null || !existingUser.getPassword().equals(user.getPassword())) {
                 return generateErrorResponse(401, "User or password is incorrect.");
             }
@@ -60,7 +55,6 @@ public class UserService
         }
     }
 
-    //Método para usar mensagem de erro
     private ResponseEntity<Object> generateErrorResponse(int errorCode, String message) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", errorCode);
@@ -68,33 +62,27 @@ public class UserService
         return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(errorCode));
     }
 
-    public List<UserModel> readUsers() throws Exception
-    {
+    public List<UserModel> readUsers() throws Exception {
         return userRepository.findAll();
     }
 
-    public ResponseEntity<Object> readById(Long id)
-    {
+    public ResponseEntity<Object> readById(Long id) {
         Optional<UserModel> userOptional = userRepository.findById(id);
 
         if (userOptional.isEmpty()) {
-            // User not found, return error message
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 404);
             errorResponse.put("message", "User not found!");
             return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
         }
 
-        // User found, return the user object
         return new ResponseEntity<>(userOptional.get(), HttpStatus.OK);
     }
 
-    public ResponseEntity<Object> getUserGroups(Long userId)
-    {
+    public ResponseEntity<Object> getUserGroups(Long userId) {
         Optional<UserModel> userOptional = userRepository.findById(userId);
 
         if (userOptional.isEmpty()) {
-            // User not found, return error message
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 404);
             errorResponse.put("message", "User not found!");
@@ -107,11 +95,8 @@ public class UserService
     }
 
     @Transactional
-    public ResponseEntity<Object> update(UserUpdateDTO user, Long id)
-    {
-        try
-        {
-            // Check if user exists
+    public ResponseEntity<Object> update(UserUpdateDTO user, Long id) {
+        try {
             Optional<UserModel> userOptional = userRepository.findById(id);
             if (userOptional.isEmpty()) {
                 Map<String, Object> errorResponse = new HashMap<>();
@@ -120,7 +105,6 @@ public class UserService
                 return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
             }
 
-            // User found, update details
             UserModel userToUpdate = userOptional.get();
             userToUpdate.setName(user.getName());
             userToUpdate.setPhone(user.getPhone());
@@ -129,17 +113,13 @@ public class UserService
             userToUpdate.setState(user.getState());
             userToUpdate.setCity(user.getCity());
 
-            // Save the updated user
             userRepository.save(userToUpdate);
 
-            // Update successful, return the updated user
             Map<String, Object> successResponse = new HashMap<>();
-            successResponse.put("error", 200);
             successResponse.put("message", "User updated successfully!");
             return new ResponseEntity<>(successResponse, HttpStatus.OK);
-        }
-        catch (Exception e)
-        {
+
+        } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 500);
             errorResponse.put("message", e.getMessage());
@@ -148,11 +128,8 @@ public class UserService
     }
 
     @Transactional
-    public ResponseEntity<Object> updateLogin(UserLoginUpdateDTO user, Long id)
-    {
-        try
-        {
-            // Check if user exists
+    public ResponseEntity<Object> updateLogin(UserLoginUpdateDTO user, Long id) {
+        try {
             Optional<UserModel> userOptional = userRepository.findById(id);
             if (userOptional.isEmpty()) {
                 Map<String, Object> errorResponse = new HashMap<>();
@@ -161,21 +138,17 @@ public class UserService
                 return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
             }
 
-            // User found, update details
             UserModel userToUpdate = userOptional.get();
             userToUpdate.setEmail(user.getEmail());
             userToUpdate.setPassword(user.getPassword());
 
-            // Save the updated user
             userRepository.save(userToUpdate);
 
-            // Update successful, return the updated user
             Map<String, Object> successResponse = new HashMap<>();
             successResponse.put("message", "User updated successfully!");
             return new ResponseEntity<>(successResponse, HttpStatus.OK);
-        }
-        catch (Exception e)
-        {
+
+        } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 500);
             errorResponse.put("message", e.getMessage());
@@ -183,12 +156,9 @@ public class UserService
         }
     }
 
-
     @Transactional
-    public ResponseEntity<Object> delete(Long id)
-    {
-        try
-        {
+    public ResponseEntity<Object> delete(Long id) {
+        try {
             Optional<UserModel> userOptional = userRepository.findById(id);
 
             if (userOptional.isEmpty()) {
@@ -198,24 +168,20 @@ public class UserService
                 return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
             }
 
-            // Check if user belongs to any groups
             UserModel user = userOptional.get();
             boolean hasGroups = !user.getGroups().isEmpty();
 
-            if (hasGroups)
-            {
+            if (hasGroups) {
                 Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", 409); // Conflict
+                errorResponse.put("error", 409);
                 errorResponse.put("message", "User cannot be deleted as it belongs to groups!");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
 
             userRepository.deleteById(id);
             return new ResponseEntity<>(HttpStatus.OK);
-        }
-        catch (Exception e)
-        {
-            // Handle exceptions (unchanged)
+
+        } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", 500);
             errorResponse.put("message", "An error occurred while deleting the user.");
