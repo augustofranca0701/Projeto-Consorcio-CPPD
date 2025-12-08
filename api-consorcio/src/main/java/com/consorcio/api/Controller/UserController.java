@@ -1,69 +1,55 @@
-package com.consorcio.api.Controller;
+package com.consorcio.api.controller;
 
-import com.consorcio.api.DTO.UserDTO.UserLoginDTO;
-import com.consorcio.api.DTO.UserDTO.UserLoginUpdateDTO;
-import com.consorcio.api.DTO.UserDTO.UserUpdateDTO;
-import com.consorcio.api.Model.UserModel;
-import com.consorcio.api.Service.UserService;
+import com.consorcio.api.dto.UserDTO.UserLoginDTO;
+import com.consorcio.api.repository.UserRepository;
+import com.consorcio.api.security.JwtUtil;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("users")
-public class UserController
-{
-    @Autowired
-    private UserService userService;
+@RequestMapping("/api")
+public class UserController {
 
-    @PostMapping("signup")
-    public ResponseEntity<Object> signup(@RequestBody @Valid UserModel user)
-    {
-        return userService.create(user);
+    private final UserRepository userRepo;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
+    public UserController(UserRepository userRepo,
+                          PasswordEncoder passwordEncoder,
+                          AuthenticationManager authenticationManager,
+                          JwtUtil jwtUtil) {
+        this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
-    @PostMapping("login")
-    public ResponseEntity<Object> login(@RequestBody @Valid UserLoginDTO user)
-    {
-        return userService.login(user);
-    }
+    @PostMapping("/auth/login")
+    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO dto) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+            );
 
-    @GetMapping("")
-    public List<UserModel> readUsers() throws Exception
-    {
-        return userService.readUsers();
-    }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Object> readUserById(@PathVariable("id") Long id) throws Exception
-    {
-        return userService.readById(id);
-    }
+            String token = jwtUtil.generateToken(dto.getEmail());
 
-    @GetMapping("/{userId}/groups")
-    public ResponseEntity<Object> getUserGroups(@PathVariable("userId") Long userId) throws Exception
-    {
-        return userService.getUserGroups(userId);
-    }
+            return ResponseEntity.ok(Map.of("token", token));
 
-    @PutMapping("/{id}/update")
-    public ResponseEntity<Object> update(@PathVariable("id") Long id, @RequestBody @Valid UserUpdateDTO user) throws Exception
-    {
-        return userService.update(user, id);
-    }
-
-    @PutMapping("/{id}/updatelogin")
-    public ResponseEntity<Object> updateLogin(@PathVariable("id") Long id, @RequestBody @Valid UserLoginUpdateDTO user) throws Exception
-    {
-        return userService.updateLogin(user, id);
-    }
-
-    @DeleteMapping("/{id}/delete")
-    public ResponseEntity<Object> delete(@PathVariable("id") Long id) throws Exception
-    {
-        return userService.delete(id);
+        } catch (BadCredentialsException ex) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "credenciais_invalidas"));
+        }
     }
 }

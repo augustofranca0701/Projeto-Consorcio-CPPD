@@ -1,6 +1,6 @@
-package com.consorcio.api.Repository;
+package com.consorcio.api.repository;
 
-import com.consorcio.api.Model.PaymentModel;
+import com.consorcio.api.model.PaymentModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PaymentRepository extends JpaRepository<PaymentModel, Long>

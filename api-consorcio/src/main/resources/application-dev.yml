@@ -7,3 +7,8 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  jwt:
+    # essa property será injetada pelo Spring a partir da env var JWT_SECRET
+    secret: ${JWT_SECRET}
+    # opcional: tempo de expiração (ms)
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}

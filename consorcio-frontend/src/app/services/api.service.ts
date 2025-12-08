@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 
@@ -18,32 +18,54 @@ import { CreateGroup } from '../../models/Group/createGroup.model';
 })
 export class ApiService {
   private api = environment.api;
+  baseUrl: string | undefined;
 
   constructor(private http: HttpClient) {}
 
   // USERS
-  getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.api}/users`);
+  getUsers() {
+    const token = localStorage.getItem('token');
+    const options = token
+      ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
+      : {};
+    return this.http.get<any[]>('http://localhost:8080/users', options);
   }
 
   getUser(id: number): Observable<User> {
     return this.http.get<User>(`${this.api}/users/${id}`);
   }
 
-  postSignUp(user: User): Observable<User> {
-    return this.http.post<User>(`${this.api}/users/signup`, user);
+  /**
+   * Registra um usuário no backend.
+   * Retorno é do tipo any porque o backend devolve um Map com "message" ou erro.
+   */
+  postSignUp(payload: any) {
+    const base = this.baseUrl || 'http://localhost:8080';
+    const url = `${base}/api/auth/register`;
+    return this.http.post(url, payload);
   }
 
-  postLogin(body: any): Observable<User> {
-    return this.http.post<User>(`${this.api}/users/login`, body);
+
+  /**
+   * Login (ajustado para o endpoint do backend)
+   */
+  postLogin(body: any): Observable<any> {
+    return this.http.post<any>(`${this.api}/api/auth/login`, body);
   }
+
 
   updateUser(data: UpdateUser, userId: number): Observable<UpdateUser> {
-    return this.http.put<UpdateUser>(`${this.api}/users/${userId}/update`, data);
+    return this.http.put<UpdateUser>(
+      `${this.api}/users/${userId}/update`,
+      data
+    );
   }
 
   updateLogin(data: UpdateLogin, userId: number): Observable<UpdateUser> {
-    return this.http.put<UpdateUser>(`${this.api}/users/${userId}/updatelogin`, data);
+    return this.http.put<UpdateUser>(
+      `${this.api}/users/${userId}/updatelogin`,
+      data
+    );
   }
 
   // GROUPS
@@ -52,7 +74,10 @@ export class ApiService {
   }
 
   postGroup(userId: number, group: CreateGroup): Observable<CreateGroup> {
-    return this.http.post<CreateGroup>(`${this.api}/groups/${userId}/create`, group);
+    return this.http.post<CreateGroup>(
+      `${this.api}/groups/${userId}/create`,
+      group
+    );
   }
 
   // PAYMENTS
@@ -61,6 +86,9 @@ export class ApiService {
   }
 
   makePayment(idBoleto: number, userId: number): Observable<MakePayment> {
-    return this.http.put<MakePayment>(`${this.api}/payments/${userId}/${idBoleto}`, {});
+    return this.http.put<MakePayment>(
+      `${this.api}/payments/${userId}/${idBoleto}`,
+      {}
+    );
   }
 }

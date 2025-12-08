@@ -8,6 +8,9 @@ import { VisibilityService } from './services/visibility.service';
 import { environment } from '../environments/environment';
 import { ApiService } from './services/api.service';
 
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+
 @Component({
     selector: 'app-root',
     standalone: true,
@@ -26,13 +29,28 @@ export class AppComponent implements OnInit, AfterViewInit {
     private apiService: ApiService, // Certifique-se que a injeção está correta
     private cdr: ChangeDetectorRef
   ) {
-    console.log('TO AQUI', environment.api);
+    console.log(environment.api);
   }
 
   ngOnInit() {
-    this.apiService.getUsers().subscribe(data => {
-      this.users = data;
-    });
+    // evita chamar /users quando não há token (registro/visitante)
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('Sem token: pulando chamada GET /users (app.component)');
+      return;
+    }
+
+    // se houver token, faz a requisição e trata erros localmente
+    this.apiService.getUsers()
+      .pipe(
+        catchError(err => {
+          console.warn('Erro ao buscar users (app.component):', err?.message ?? err);
+          return of([]); // evita propagar o erro para o error handler global
+        })
+      )
+      .subscribe(data => {
+        this.users = data;
+      });
   }
 
   ngAfterViewInit() {

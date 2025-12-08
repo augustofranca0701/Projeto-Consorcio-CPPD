@@ -1,9 +1,9 @@
-package com.consorcio.api.Service;
+package com.consorcio.api.service;
 
-import com.consorcio.api.Model.GroupModel;
-import com.consorcio.api.Model.UserModel;
-import com.consorcio.api.Repository.GroupRepository;
-import com.consorcio.api.Repository.UserRepository;
+import com.consorcio.api.model.GroupModel;
+import com.consorcio.api.model.UserModel;
+import com.consorcio.api.repository.GroupRepository;
+import com.consorcio.api.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;

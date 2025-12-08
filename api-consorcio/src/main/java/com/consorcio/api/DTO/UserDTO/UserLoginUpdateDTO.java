@@ -1,4 +1,4 @@
-package com.consorcio.api.DTO.UserDTO;
+package com.consorcio.api.dto.UserDTO;
 
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;

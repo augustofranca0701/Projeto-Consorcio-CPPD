@@ -1,7 +1,7 @@
-package com.consorcio.api.Controller;
+package com.consorcio.api.controller;
 
-import com.consorcio.api.Model.GroupModel;
-import com.consorcio.api.Service.GroupService;
+import com.consorcio.api.model.GroupModel;
+import com.consorcio.api.service.GroupService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

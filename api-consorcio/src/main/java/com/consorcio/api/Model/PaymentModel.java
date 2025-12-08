@@ -1,4 +1,4 @@
-package com.consorcio.api.Model;
+package com.consorcio.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
