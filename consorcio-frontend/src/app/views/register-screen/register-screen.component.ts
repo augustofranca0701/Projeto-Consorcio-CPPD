@@ -42,13 +42,12 @@ import { CommonModule } from '@angular/common';
     MatButtonModule,
     MatInputModule,
     FormsModule,
-    RouterOutlet,
     RouterLink,
     RouterLinkActive,
     MatIconModule,
     MatSnackBarModule,
-    CommonModule,
-  ],
+    CommonModule
+],
 })
 export class RegisterScreenComponent implements OnInit {
   signUpForm: FormGroup;
@@ -142,7 +141,7 @@ export class RegisterScreenComponent implements OnInit {
   signUp() {
     if (this.signUpForm.valid) {
       let formData = { ...this.signUpForm.value };
-
+      console.log('Payload que vamos enviar:', formData); // <-- confirma tudo
       // mapear name -> nome se backend espera 'nome'
       formData.nome = formData.name;
 

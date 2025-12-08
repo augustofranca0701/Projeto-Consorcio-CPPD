@@ -22,20 +22,37 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterDTO dto) {
-
-        if (dto.getEmail() == null || dto.getPassword() == null) {
+        if (dto == null || dto.getEmail() == null || dto.getPassword() == null) {
             return ResponseEntity.badRequest().body("email/password required");
         }
 
-        UserModel newUser = new UserModel();
-        newUser.setEmail(dto.getEmail());
-        newUser.setName(dto.getName());
+        try {
+            UserModel newUser = new UserModel();
 
-        // Senha criptografada
-        newUser.setPassword(passwordEncoder.encode(dto.getPassword()));
+            // Campos básicos
+            newUser.setEmail(dto.getEmail());
+            newUser.setName(dto.getName());
 
-        var created = userService.create(newUser);
+            // Campos adicionais (verifique se UserModel tem esses setters)
+            newUser.setCpf(dto.getCpf());
+            newUser.setPhone(dto.getPhone());
+            newUser.setAddress(dto.getAddress());
+            newUser.setComplement(dto.getComplement());
+            newUser.setCity(dto.getCity());
+            newUser.setState(dto.getState());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(created.getBody());
+            // Senha criptografada
+            newUser.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+            var created = userService.create(newUser);
+
+            // Mantive a forma de retorno que você já usava.
+            return ResponseEntity.status(HttpStatus.CREATED).body(created.getBody());
+        } catch (Exception e) {
+            // Logue o erro no seu logger real (aqui uso print para exemplo)
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao criar usuário: " + e.getMessage());
+        }
     }
 }
