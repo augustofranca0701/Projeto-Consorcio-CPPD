@@ -11,7 +11,6 @@ import { CommonModule } from '@angular/common';
 import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
 
-
 @Component({
     selector: 'app-track-payments',
     standalone: true,
@@ -28,24 +27,25 @@ export class TrackPaymentsComponent {
   showFullList = false;
   limit = 3;
 
-
-  constructor(private apiService: ApiService,private userService: UserService,private router: Router) {
+  constructor(private apiService: ApiService, private userService: UserService, private router: Router) {
     this.loadData();
   }
 
   loadData() {
-    // Obtém o usuário logado
-    let user = this.userService.getUser();
+    // obtém o id do usuário logado com segurança; redireciona para /login se necessário
+    const userId = this.userService.requireUserIdOrRedirect();
+    if (!userId) return;
 
-    // Verifica se tem usuário logado
-    if (user === undefined){this.router.navigate(['/login']);}
-
-    this.apiService.getPayments(user.id!)
-      .subscribe(boletos => {
-        this.allPaidBoletos = boletos.filter(boleto => boleto.isPaid);
-        this.allNotPaidBoletos = boletos.filter(boleto => !boleto.isPaid);
-
-        this.calculateTotals();
+    this.apiService.getPayments(userId)
+      .subscribe({
+        next: boletos => {
+          this.allPaidBoletos = boletos.filter(boleto => boleto.isPaid);
+          this.allNotPaidBoletos = boletos.filter(boleto => !boleto.isPaid);
+          this.calculateTotals();
+        },
+        error: err => {
+          console.error('Erro ao carregar boletos:', err);
+        }
       });
   }
 

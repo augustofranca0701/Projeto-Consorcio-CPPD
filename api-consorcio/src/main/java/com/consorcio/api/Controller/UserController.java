@@ -1,55 +1,42 @@
 package com.consorcio.api.controller;
 
-import com.consorcio.api.dto.UserDTO.UserLoginDTO;
+import com.consorcio.api.model.UserModel;
 import com.consorcio.api.repository.UserRepository;
-import com.consorcio.api.security.JwtUtil;
-import jakarta.validation.Valid;
+import com.consorcio.api.security.AppUserPrincipal;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserRepository userRepo;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtUtil jwtUtil;
 
-    public UserController(UserRepository userRepo,
-                          PasswordEncoder passwordEncoder,
-                          AuthenticationManager authenticationManager,
-                          JwtUtil jwtUtil) {
+    public UserController(UserRepository userRepo) {
         this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
     }
 
-    @PostMapping("/auth/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO dto) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
-            );
+    // ==========================
+    // GET USER LOGADO (/me)
+    // ==========================
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> me(Authentication authentication) {
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            String token = jwtUtil.generateToken(dto.getEmail());
-
-            return ResponseEntity.ok(Map.of("token", token));
-
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("error", "credenciais_invalidas"));
+        if (authentication == null || !(authentication.getPrincipal() instanceof AppUserPrincipal principal)) {
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("error", "nao_autenticado"));
         }
+
+        UserModel user = principal.getUser();
+        user.setPassword(null);
+
+        return ResponseEntity.ok(user);
     }
 }

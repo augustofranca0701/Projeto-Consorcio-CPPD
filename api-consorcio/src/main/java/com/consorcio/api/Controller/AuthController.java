@@ -1,58 +1,117 @@
 package com.consorcio.api.controller;
 
 import com.consorcio.api.dto.UserDTO.RegisterDTO;
+import com.consorcio.api.dto.UserDTO.UserLoginDTO;
+import com.consorcio.api.dto.UserDTO.UserResponseDTO;
 import com.consorcio.api.model.UserModel;
+import com.consorcio.api.security.AppUserPrincipal;
+import com.consorcio.api.security.JwtUtil;
 import com.consorcio.api.service.UserService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(UserService userService, PasswordEncoder passwordEncoder) {
+    public AuthController(
+            UserService userService,
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil
+    ) {
         this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
+    // ================= REGISTER =================
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterDTO dto) {
+
         if (dto == null || dto.getEmail() == null || dto.getPassword() == null) {
-            return ResponseEntity.badRequest().body("email/password required");
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("error", "email_password_required"));
         }
+
+        UserModel user = new UserModel();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(dto.getPassword());
+        user.setCpf(dto.getCpf());
+        user.setPhone(dto.getPhone());
+        user.setAddress(dto.getAddress());
+        user.setComplement(dto.getComplement());
+        user.setCity(dto.getCity());
+        user.setState(dto.getState());
+
+        UserModel created = userService.create(user);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(Map.of(
+                        "uuid", created.getUuid(),
+                        "name", created.getName(),
+                        "email", created.getEmail(),
+                        "createdAt", created.getCreatedAt()
+                ));
+    }
+
+    // ================= LOGIN =================
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody UserLoginDTO dto) {
 
         try {
-            UserModel newUser = new UserModel();
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            dto.getEmail(),
+                            dto.getPassword()
+                    )
+            );
 
-            // Campos básicos
-            newUser.setEmail(dto.getEmail());
-            newUser.setName(dto.getName());
+            String token = jwtUtil.generateToken(dto.getEmail());
 
-            // Campos adicionais (verifique se UserModel tem esses setters)
-            newUser.setCpf(dto.getCpf());
-            newUser.setPhone(dto.getPhone());
-            newUser.setAddress(dto.getAddress());
-            newUser.setComplement(dto.getComplement());
-            newUser.setCity(dto.getCity());
-            newUser.setState(dto.getState());
+            return ResponseEntity.ok(Map.of(
+                    "token", token,
+                    "type", "Bearer"
+            ));
 
-            // Senha criptografada
-            newUser.setPassword(passwordEncoder.encode(dto.getPassword()));
-
-            var created = userService.create(newUser);
-
-            // Mantive a forma de retorno que você já usava.
-            return ResponseEntity.status(HttpStatus.CREATED).body(created.getBody());
-        } catch (Exception e) {
-            // Logue o erro no seu logger real (aqui uso print para exemplo)
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao criar usuário: " + e.getMessage());
+        } catch (AuthenticationException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "invalid_credentials"));
         }
     }
+
+    // ================= ME =================
+    @GetMapping("/me")
+@PreAuthorize("hasRole('USER')")
+public ResponseEntity<?> me(Authentication authentication) {
+
+    AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
+    UserModel user = principal.getUser();
+
+    UserResponseDTO dto = new UserResponseDTO();
+    dto.setId(user.getId());
+    dto.setUuid(user.getUuid());
+    dto.setName(user.getName());
+    dto.setEmail(user.getEmail());
+    dto.setCreatedAt(user.getCreatedAt());
+
+    return ResponseEntity.ok(dto);
+}
+
 }

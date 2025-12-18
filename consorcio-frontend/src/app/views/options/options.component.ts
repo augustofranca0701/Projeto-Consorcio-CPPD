@@ -6,11 +6,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
-import {MatTooltipModule} from '@angular/material/tooltip';
-import {MatButtonModule} from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ApiService } from '../../services/api.service';
 import { User } from '../../../models/User/user.model';
+import { ApiService } from '../../services/api.service';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../services/user.service';
 
@@ -37,6 +37,9 @@ export class OptionsComponent {
     city: '',
   }
 
+  constructor(private apiService: ApiService, private userService: UserService, private router: Router) {
+    this.obterDadosUsuario();
+  }
 
   toggleHide() {
     this.hide = !this.hide;
@@ -45,23 +48,23 @@ export class OptionsComponent {
     window.open('https://wa.me/5562981687434', '_blank');
   }
 
-
-  constructor(private apiService: ApiService,private userService: UserService,private router: Router) {
-    this.obterDadosUsuario();
-  }
-
   obterDadosUsuario() {
-  // Obtém o usuário logado
-  let user = this.userService.getUser();
+    // obtém o id do usuário logado com segurança; redireciona para /login se necessário
+    const userId = this.userService.requireUserIdOrRedirect();
+    if (!userId) return;
 
-  // Verifica se tem usuário logado
-  if (user === undefined){this.router.navigate(['/login']);}
-
-    this.apiService.getUser(user.id!)
-      .subscribe(dados => this.dados = dados);
+    this.apiService.getUser(userId)
+      .subscribe({
+        next: dados => this.dados = dados,
+        error: err => {
+          console.error('Erro ao obter dados do usuário:', err);
+          // opcional: mostrar snackbar
+        }
+      });
   }
 
   formatPhoneNumber(phone: string): string {
+    if (!phone) return '';
     const match = phone.match(/^(\d{2})(\d{1})(\d{4})(\d{4})$/);
     if (match) {
       return `(${match[1]}) ${match[2]} ${match[3]}-${match[4]}`;

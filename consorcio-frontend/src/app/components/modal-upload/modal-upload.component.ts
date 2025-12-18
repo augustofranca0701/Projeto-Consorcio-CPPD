@@ -1,18 +1,17 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule} from '@angular/material/dialog';
-import {MatButtonModule} from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import {MatInputModule} from '@angular/material/input';
-import {FormsModule} from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { UserPayments } from '../../../models/Payment/user-payments.model';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ApiService } from '../../services/api.service';
-import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarModule, MatSnackBarVerticalPosition} from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarModule, MatSnackBarVerticalPosition } from '@angular/material/snack-bar';
 import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
-
 
 @Component({
   selector: 'app-modal-upload',
@@ -21,8 +20,6 @@ import { Router } from '@angular/router';
   templateUrl: './modal-upload.component.html',
   styleUrl: './modal-upload.component.css'
 })
-
-
 export class ModalUploadComponent implements OnInit {
   boletos: UserPayments[] = [];
   selectedFile: File | null = null;
@@ -37,7 +34,8 @@ export class ModalUploadComponent implements OnInit {
     private snackBar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA) public data: { idBoleto: string },
     private apiService: ApiService,
-    private userService: UserService,private router: Router
+    private userService: UserService,
+    private router: Router
   ) {
     this.idBoleto = data.idBoleto;
   }
@@ -61,37 +59,52 @@ export class ModalUploadComponent implements OnInit {
   }
 
   enviarPagamento() {
-    // Obtém o usuário logado
-    let user = this.userService.getUser();
+    // Garante que exista um userId válido; caso não exista, o método redireciona para /login
+    const userId = this.userService.requireUserIdOrRedirect();
+    if (!userId) return;
 
-    // Verifica se tem usuário logado
-    if (user === undefined){this.router.navigate(['/login']);}
-
-    if (this.idBoleto) {
-      this.apiService.makePayment(parseFloat(this.idBoleto), user.id!).pipe(
-        catchError(error => {
-          console.error('Erro ao enviar o pagamento:', error);
-          this.snackBar.open('Erro ao enviar o pagamento. Por favor, tente novamente mais tarde.', 'Fechar', {
-            horizontalPosition: this.horizontalPosition,
-            verticalPosition: this.verticalPosition,
-            duration: 5000,
-          });
-          return of(null);
-        })
-      ).subscribe(response => {
-        if (response) {
-          console.log('Pagamento enviado com sucesso!', response);
-          this.dialogRef.close();
-          this.snackBar.open('Pagamento enviado com sucesso!', 'Fechar', {
-            horizontalPosition: this.horizontalPosition,
-            verticalPosition: this.verticalPosition,
-            duration: 3000,
-          });
-        }
-      });
-    } else {
+    if (!this.idBoleto) {
       console.error('ID do boleto não fornecido');
+      this.snackBar.open('ID do boleto inválido.', 'Fechar', {
+        horizontalPosition: this.horizontalPosition,
+        verticalPosition: this.verticalPosition,
+        duration: 3000,
+      });
+      return;
     }
+
+    const boletoNum = parseFloat(this.idBoleto);
+    if (Number.isNaN(boletoNum)) {
+      console.error('ID do boleto inválido (NaN):', this.idBoleto);
+      this.snackBar.open('ID do boleto inválido.', 'Fechar', {
+        horizontalPosition: this.horizontalPosition,
+        verticalPosition: this.verticalPosition,
+        duration: 3000,
+      });
+      return;
+    }
+
+    this.apiService.makePayment(boletoNum, userId).pipe(
+      catchError(error => {
+        console.error('Erro ao enviar o pagamento:', error);
+        this.snackBar.open('Erro ao enviar o pagamento. Por favor, tente novamente mais tarde.', 'Fechar', {
+          horizontalPosition: this.horizontalPosition,
+          verticalPosition: this.verticalPosition,
+          duration: 5000,
+        });
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        console.log('Pagamento enviado com sucesso!', response);
+        this.dialogRef.close();
+        this.snackBar.open('Pagamento enviado com sucesso!', 'Fechar', {
+          horizontalPosition: this.horizontalPosition,
+          verticalPosition: this.verticalPosition,
+          duration: 3000,
+        });
+      }
+    });
   }
 
   isImageType(type: string | undefined) {

@@ -13,11 +13,12 @@ import { EditAccountComponent } from './views/options/edit-account/edit-account.
 import { EditProfileComponent } from './views/options/edit-profile/edit-profile.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
-
+import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '',
     component: MainLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
   { path: '', component: HomeComponent },
   { path: 'create-groups', component: CreateGroupsComponent},

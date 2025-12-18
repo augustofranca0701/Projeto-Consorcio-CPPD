@@ -50,13 +50,15 @@ export class EditAccountComponent implements OnInit{
     private formActionService: FormActionService,
     private apiService: ApiService,
     private snackBar: MatSnackBar,
-    private visibilityService: VisibilityService,private userService: UserService,private router: Router
+    private visibilityService: VisibilityService,
+    private userService: UserService,
+    private router: Router
   ) {
     this.visibilityService.setShowComponent(true);
     merge(this.email.statusChanges, this.email.valueChanges)
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.updateErrorMessage());
-      this.obterDadosUsuario();
+    this.obterDadosUsuario();
   }
 
   updateErrorMessage() {
@@ -67,68 +69,70 @@ export class EditAccountComponent implements OnInit{
     } else {
       this.errorMessage = '';
     }
-}
-
-ngOnInit(): void {
-  this.formActionService.formAction$.subscribe(() => {
-    this.updateLogin();
-  });
-}
-
-obterDadosUsuario() {
-  // Obtém o usuário logado
-  let user = this.userService.getUser();
-
-  // Verifica se tem usuário logado
-  if (user === undefined){this.router.navigate(['/login']);}
-
-  this.apiService.getUser(user.id!).subscribe(dados => {
-    this.dados = dados;
-    this.email.setValue(this.dados.email);
-    this.password.setValue(this.dados.password);
-  });
-}
-
-updateLogin() {
-  const emailValue = this.email.value;
-  const passwordValue = this.password.value;
-  if (!emailValue || !passwordValue) {
-    return;
   }
 
-  // Obtém o usuário logado
-  let user = this.userService.getUser();
+  ngOnInit(): void {
+    this.formActionService.formAction$.subscribe(() => {
+      this.updateLogin();
+    });
+  }
 
-  // Verifica se tem usuário logado
-  if (user === undefined){this.router.navigate(['/login']);}
+  obterDadosUsuario() {
+    // obtém o id do usuário logado com segurança; redireciona para /login se necessário
+    const userId = this.userService.requireUserIdOrRedirect();
+    if (!userId) return;
 
-  this.apiService.updateLogin({
-    email: emailValue,
-    password: passwordValue
-  }, user.id!)
-
-  .subscribe(
-    () => {
-      this.obterDadosUsuario();
-      this.snackBar.open('Perfil atualizado com sucesso!', 'Fechar', {
+    this.apiService.getUser(userId).subscribe(dados => {
+      this.dados = dados;
+      this.email.setValue(this.dados.email);
+      this.password.setValue(this.dados.password);
+    }, error => {
+      console.error('Erro ao obter dados do usuário:', error);
+      this.snackBar.open('Erro ao obter dados do usuário.', 'Fechar', {
         horizontalPosition: this.horizontalPosition,
         verticalPosition: this.verticalPosition,
         duration: 3000
       });
-    },
-    error => {
-      this.snackBar.open('Erro ao atualizar perfil.', 'Fechar', {
-        horizontalPosition: this.horizontalPosition,
-        verticalPosition: this.verticalPosition,
-        duration: 3000
-      });
+    });
+  }
+
+  updateLogin() {
+    const emailValue = this.email.value;
+    const passwordValue = this.password.value;
+    if (!emailValue || !passwordValue) {
+      return;
     }
-  );
-}
 
-setDados(dado: UpdateLogin) {
-  this.email.setValue (dado.email);
-  this.password.setValue(dado.password);
-}
-}
+    // obtém o id do usuário logado com segurança
+    const userId = this.userService.requireUserIdOrRedirect();
+    if (!userId) return;
 
+    this.apiService.updateLogin({
+      email: emailValue,
+      password: passwordValue
+    }, userId)
+    .subscribe(
+      () => {
+        this.obterDadosUsuario();
+        this.snackBar.open('Perfil atualizado com sucesso!', 'Fechar', {
+          horizontalPosition: this.horizontalPosition,
+          verticalPosition: this.verticalPosition,
+          duration: 3000
+        });
+      },
+      error => {
+        console.error('Erro ao atualizar login:', error);
+        this.snackBar.open('Erro ao atualizar perfil.', 'Fechar', {
+          horizontalPosition: this.horizontalPosition,
+          verticalPosition: this.verticalPosition,
+          duration: 3000
+        });
+      }
+    );
+  }
+
+  setDados(dado: UpdateLogin) {
+    this.email.setValue (dado.email);
+    this.password.setValue(dado.password);
+  }
+}

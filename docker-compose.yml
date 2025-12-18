@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+
   db:
     image: postgres:15
     container_name: consorcio_db
@@ -21,29 +22,49 @@ services:
       timeout: 5s
       retries: 5
 
+
   api:
     build:
       context: ./api-consorcio
       dockerfile: Dockerfile
     container_name: consorcio_api
     restart: unless-stopped
+
+    # IMPORTANTE: carrega variáveis do .env
     env_file:
       - ./.env
+
     environment:
+      # PERFIL SPRING
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      # configura a URL de conexão para o Spring (aponta para o serviço db)
+
+      # DATABASE — Spring usa ESSAS variáveis, não DB_HOST/DB_PORT direto
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      # expõe o host do banco dentro do container (opcional)
+
+      # variáveis do banco expostas opcionalmente
       DB_HOST: db
       DB_PORT: 5432
+
+      # ==========================
+      # JWT — ESSENCIAL
+      # ==========================
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+
+      # Alternativa útil:
+      SPRING_JWT_SECRET: ${JWT_SECRET}
+
     ports:
       - "8080:8080"
+
     depends_on:
       - db
-    # o Dockerfile que eu te passo gera /app/app.jar
+
+    # o Dockerfile gera /app/app.jar
     command: ["java", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}", "-jar", "/app/app.jar"]
+
 
   frontend_dev:
     profiles: ["dev"]
@@ -56,9 +77,11 @@ services:
     volumes:
       - ./consorcio-frontend:/app:delegated
       - /app/node_modules
+      - /app/.angular
     command: ["npm", "run", "start", "--", "--host", "0.0.0.0", "--poll=2000"]
     depends_on:
       - api
+
 
   frontend_prod:
     profiles: ["prod"]
@@ -70,6 +93,7 @@ services:
       - "80:80"
     depends_on:
       - api
+
 
 volumes:
   postgres_data:
