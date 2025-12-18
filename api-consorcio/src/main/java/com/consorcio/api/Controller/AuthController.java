@@ -39,36 +39,35 @@ public class AuthController {
 
     // ================= REGISTER =================
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterDTO dto) {
+public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterDTO dto) {
 
-        if (dto == null || dto.getEmail() == null || dto.getPassword() == null) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(Map.of("error", "email_password_required"));
-        }
-
-        UserModel user = new UserModel();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword());
-        user.setCpf(dto.getCpf());
-        user.setPhone(dto.getPhone());
-        user.setAddress(dto.getAddress());
-        user.setComplement(dto.getComplement());
-        user.setCity(dto.getCity());
-        user.setState(dto.getState());
-
-        UserModel created = userService.create(user);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(Map.of(
-                        "uuid", created.getUuid(),
-                        "name", created.getName(),
-                        "email", created.getEmail(),
-                        "createdAt", created.getCreatedAt()
-                ));
+    if (dto == null || dto.getEmail() == null || dto.getPassword() == null) {
+        return ResponseEntity.badRequest().build();
     }
+
+    UserModel user = new UserModel();
+    user.setName(dto.getName());
+    user.setEmail(dto.getEmail());
+    user.setPassword(dto.getPassword());
+    user.setCpf(dto.getCpf());
+    user.setPhone(dto.getPhone());
+    user.setAddress(dto.getAddress());
+    user.setComplement(dto.getComplement());
+    user.setCity(dto.getCity());
+    user.setState(dto.getState());
+
+    UserModel created = userService.create(user);
+
+    UserResponseDTO response = new UserResponseDTO();
+    response.setId(created.getId());
+    response.setUuid(created.getUuid());
+    response.setName(created.getName());
+    response.setEmail(created.getEmail());
+    response.setCreatedAt(created.getCreatedAt());
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
+
 
     // ================= LOGIN =================
     @PostMapping("/login")
@@ -97,7 +96,7 @@ public class AuthController {
     }
 
     // ================= ME =================
-    @GetMapping("/me")
+@GetMapping("/me")
 @PreAuthorize("hasRole('USER')")
 public ResponseEntity<?> me(Authentication authentication) {
 

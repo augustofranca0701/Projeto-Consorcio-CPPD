@@ -1,7 +1,7 @@
 package com.consorcio.api.controller;
 
+import com.consorcio.api.dto.UserDTO.UserResponseDTO;
 import com.consorcio.api.model.UserModel;
-import com.consorcio.api.repository.UserRepository;
 import com.consorcio.api.security.AppUserPrincipal;
 
 import org.springframework.http.ResponseEntity;
@@ -15,28 +15,27 @@ import java.util.Map;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserRepository userRepo;
-
-    public UserController(UserRepository userRepo) {
-        this.userRepo = userRepo;
-    }
-
-    // ==========================
-    // GET USER LOGADO (/me)
-    // ==========================
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> me(Authentication authentication) {
 
-        if (authentication == null || !(authentication.getPrincipal() instanceof AppUserPrincipal principal)) {
+        if (authentication == null ||
+            !(authentication.getPrincipal() instanceof AppUserPrincipal principal)) {
+
             return ResponseEntity
                     .status(401)
                     .body(Map.of("error", "nao_autenticado"));
         }
 
         UserModel user = principal.getUser();
-        user.setPassword(null);
 
-        return ResponseEntity.ok(user);
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(user.getId());
+        dto.setUuid(user.getUuid());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        dto.setCreatedAt(user.getCreatedAt());
+
+        return ResponseEntity.ok(dto);
     }
 }
