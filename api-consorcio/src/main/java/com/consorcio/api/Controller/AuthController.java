@@ -39,35 +39,34 @@ public class AuthController {
 
     // ================= REGISTER =================
     @PostMapping("/register")
-public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterDTO dto) {
+    public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterDTO dto) {
 
-    if (dto == null || dto.getEmail() == null || dto.getPassword() == null) {
-        return ResponseEntity.badRequest().build();
+        if (dto == null || dto.getEmail() == null || dto.getPassword() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        UserModel user = new UserModel();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(dto.getPassword());
+        user.setCpf(dto.getCpf());
+        user.setPhone(dto.getPhone());
+        user.setAddress(dto.getAddress());
+        user.setComplement(dto.getComplement());
+        user.setCity(dto.getCity());
+        user.setState(dto.getState());
+
+        UserModel created = userService.create(user);
+
+        UserResponseDTO response = new UserResponseDTO();
+        response.setId(created.getId());
+        response.setUuid(created.getUuid());
+        response.setName(created.getName());
+        response.setEmail(created.getEmail());
+        response.setCreatedAt(created.getCreatedAt());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
-    UserModel user = new UserModel();
-    user.setName(dto.getName());
-    user.setEmail(dto.getEmail());
-    user.setPassword(dto.getPassword());
-    user.setCpf(dto.getCpf());
-    user.setPhone(dto.getPhone());
-    user.setAddress(dto.getAddress());
-    user.setComplement(dto.getComplement());
-    user.setCity(dto.getCity());
-    user.setState(dto.getState());
-
-    UserModel created = userService.create(user);
-
-    UserResponseDTO response = new UserResponseDTO();
-    response.setId(created.getId());
-    response.setUuid(created.getUuid());
-    response.setName(created.getName());
-    response.setEmail(created.getEmail());
-    response.setCreatedAt(created.getCreatedAt());
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
-}
-
 
     // ================= LOGIN =================
     @PostMapping("/login")
@@ -96,21 +95,20 @@ public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterDTO dto) {
     }
 
     // ================= ME =================
-@GetMapping("/me")
-@PreAuthorize("hasRole('USER')")
-public ResponseEntity<?> me(Authentication authentication) {
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<UserResponseDTO> me(Authentication authentication) {
 
-    AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
-    UserModel user = principal.getUser();
+        AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
+        UserModel user = principal.getUser();
 
-    UserResponseDTO dto = new UserResponseDTO();
-    dto.setId(user.getId());
-    dto.setUuid(user.getUuid());
-    dto.setName(user.getName());
-    dto.setEmail(user.getEmail());
-    dto.setCreatedAt(user.getCreatedAt());
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(user.getId());
+        dto.setUuid(user.getUuid());
+        dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+        dto.setCreatedAt(user.getCreatedAt());
 
-    return ResponseEntity.ok(dto);
-}
-
+        return ResponseEntity.ok(dto);
+    }
 }
