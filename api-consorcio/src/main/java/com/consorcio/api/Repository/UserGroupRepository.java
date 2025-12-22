@@ -1,6 +1,7 @@
 package com.consorcio.api.repository;
 
 import com.consorcio.api.domain.enums.GroupRole;
+import com.consorcio.api.domain.enums.GroupStatus;
 import com.consorcio.api.model.GroupModel;
 import com.consorcio.api.model.UserGroupModel;
 import com.consorcio.api.model.UserModel;
@@ -52,4 +53,16 @@ public interface UserGroupRepository extends JpaRepository<UserGroupModel, Long>
           AND ug.role = 'ADMIN'
     """)
     boolean groupHasAdmin(GroupModel group);
+
+    // =========================
+    // APOIO AO DELETE /me
+    // =========================
+    @Query("""
+        SELECT COUNT(ug) > 0
+        FROM UserGroupModel ug
+        WHERE ug.user = :user
+          AND ug.role = 'ADMIN'
+          AND ug.group.status = :status
+    """)
+    boolean userIsAdminOfGroupWithStatus(UserModel user, GroupStatus status);
 }
