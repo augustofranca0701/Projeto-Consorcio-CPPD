@@ -1,55 +1,81 @@
 package com.consorcio.api.controller;
 
-import com.consorcio.api.dto.UserDTO.UserLoginDTO;
-import com.consorcio.api.repository.UserRepository;
-import com.consorcio.api.security.JwtUtil;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.consorcio.api.dto.UserDTO.UserResponseDTO;
+import com.consorcio.api.dto.UserDTO.UserUpdateDTO;
+import com.consorcio.api.model.UserModel;
+import com.consorcio.api.service.UserService;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 public class UserController {
 
-    private final UserRepository userRepo;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtUtil jwtUtil;
+    private final UserService userService;
 
-    public UserController(UserRepository userRepo,
-                          PasswordEncoder passwordEncoder,
-                          AuthenticationManager authenticationManager,
-                          JwtUtil jwtUtil) {
-        this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
-    @PostMapping("/auth/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO dto) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            String token = jwtUtil.generateToken(dto.getEmail());
-
-            return ResponseEntity.ok(Map.of("token", token));
-
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("error", "credenciais_invalidas"));
+    // =========================================================
+    // GET /api/users (SYSTEM ADMIN)
+    // =========================================================
+    @GetMapping
+    public List<UserResponseDTO> listUsers(
+            @AuthenticationPrincipal UserModel loggedUser
+    ) {
+        if (!loggedUser.isSystemAdmin()) {
+            throw new com.consorcio.api.domain.exception.ForbiddenDomainException("forbidden");
         }
+
+        return userService.findAll()
+                .stream()
+                .map(UserResponseDTO::new)
+                .toList();
+    }
+
+    // =========================================================
+    // GET /api/users/{uuid} (SYSTEM ADMIN)
+    // =========================================================
+    @GetMapping("/{uuid}")
+    public UserResponseDTO getUser(
+            @PathVariable String uuid,
+            @AuthenticationPrincipal UserModel loggedUser
+    ) {
+        if (!loggedUser.isSystemAdmin()) {
+            throw new com.consorcio.api.domain.exception.ForbiddenDomainException("forbidden");
+        }
+
+        return new UserResponseDTO(
+                userService.findByUuid(uuid)
+        );
+    }
+
+    // =========================================================
+    // PATCH /api/users/me
+    // =========================================================
+    @PatchMapping("/me")
+    public UserResponseDTO updateMe(
+            @RequestBody UserUpdateDTO dto,
+            @AuthenticationPrincipal UserModel loggedUser
+    ) {
+        return new UserResponseDTO(
+                userService.updateMe(loggedUser, dto)
+        );
+    }
+
+    // =========================================================
+    // DELETE /api/users/me (SOFT DELETE)
+    // =========================================================
+    @DeleteMapping("/me")
+    public Map<String, String> deleteMe(
+            @AuthenticationPrincipal UserModel loggedUser
+    ) {
+        userService.deleteMe(loggedUser);
+        return Map.of("mensagem", "Usuário removido com sucesso");
     }
 }

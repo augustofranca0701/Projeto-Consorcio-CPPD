@@ -1,35 +1,69 @@
 package com.consorcio.api.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(of = "id")
 @Table(name = "prizes")
-public class PrizeModel
-{
+public class PrizeModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "Date cannot be null.")
-    @DateTimeFormat(pattern = "dd-MM-yyyy")
+    @Column(nullable = false, unique = true)
+    private UUID uuid = UUID.randomUUID();
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "group_id")
+    private GroupModel group;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id")
+    private UserModel user;
+
+    @Column(name = "date_prize", nullable = false)
     private LocalDate datePrize;
 
-    @JsonBackReference
-    @ManyToOne
-    @JoinColumn(name = "group_id") // foreign key in the table
-    private GroupModel grupo;
+    /* =======================
+       GETTERS
+    ======================= */
 
-    private Long user_id;
+    public Long getId() {
+        return id;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public GroupModel getGroup() {
+        return group;
+    }
+
+    public UserModel getUser() {
+        return user;
+    }
+
+    public LocalDate getDatePrize() {
+        return datePrize;
+    }
+
+    /* =======================
+       SETTERS
+    ======================= */
+
+    public void setGroup(GroupModel group) {
+        this.group = group;
+    }
+
+    public void setUser(UserModel user) {
+        this.user = user;
+    }
+
+    public void setDatePrize(LocalDate datePrize) {
+        this.datePrize = datePrize;
+    }
 }

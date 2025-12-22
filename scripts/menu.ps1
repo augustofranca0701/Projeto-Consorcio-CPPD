@@ -35,6 +35,7 @@ while ($running) {
     Write-Host "[6] Derrubar containers + volumes (dangerous) - usa destroy-all -RemoveVolumes" -ForegroundColor Yellow
     Write-Host "[7] Build completo (API + Front + DB) -- opcional --no-cache" -ForegroundColor White
     Write-Host "[8] DERRUBAR TUDO (FORCE) -> containers, redes, volumes e imagens (muito perigoso)" -ForegroundColor Red
+    Write-Host "[9] Promover usuário para SYSTEM_ADMIN" -ForegroundColor Magenta
     Write-Host "[0] Sair" -ForegroundColor DarkRed
     Write-Host ""
     $op = Read-Host "Selecione uma opcao"
@@ -170,6 +171,20 @@ while ($running) {
             }
             Wait-ForEnter
         }
+
+"9" {
+    $scriptPath = Join-Path $ScriptsRoot "promote-system-admin.ps1"
+    if (Test-Path $scriptPath) {
+        & $scriptPath
+    } else {
+        Write-Host "promote-system-admin.ps1 not found." -ForegroundColor Yellow
+    }
+
+    Write-Host ""
+    Read-Host "Press ENTER to return to menu" | Out-Null
+}
+
+
 
         "0" {
             Write-Host "Saindo..." -ForegroundColor DarkRed

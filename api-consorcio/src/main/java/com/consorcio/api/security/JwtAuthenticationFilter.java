@@ -1,15 +1,11 @@
 package com.consorcio.api.security;
 
-import java.io.IOException;
-
+import com.consorcio.api.model.UserModel;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,91 +13,95 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+import java.util.List;
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
+    // 🔓 SOMENTE rotas realmente públicas
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/api/auth/login",
+            "/api/auth/register"
+    );
+
+    public JwtAuthenticationFilter(
+            JwtUtil jwtUtil,
+            CustomUserDetailsService userDetailsService
+    ) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
     }
 
-    private boolean isPublicPath(String path) {
-        if (path == null) return false;
-
-        return path.startsWith("/public/")
-                || path.startsWith("/h2-console/")
-                || path.startsWith("/swagger-ui/")
-                || path.startsWith("/v3/api-docs/");
+    /**
+     * ⚠️ ATENÇÃO
+     * Apenas LOGIN e REGISTER são públicos.
+     * /api/auth/me PRECISA passar pelo filtro.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return PUBLIC_PATHS.contains(path);
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-        String method = request.getMethod();
+        String authHeader = request.getHeader("Authorization");
 
-        logger.debug("Incoming request: {} {}", method, path);
-
-        // ==== LIBERAÇÃO DE ENDPOINTS SEM TOKEN ====
-        if ("OPTIONS".equalsIgnoreCase(method)
-                || isPublicPath(path)
-
-                // REGISTER
-                || ("/register".equals(path) && "POST".equalsIgnoreCase(method))
-                || ("/auth/register".equals(path) && "POST".equalsIgnoreCase(method))
-                || ("/api/auth/register".equals(path) && "POST".equalsIgnoreCase(method))
-
-                // LOGIN  (CORREÇÃO IMPORTANTE)
-                || ("/auth/login".equals(path) && "POST".equalsIgnoreCase(method))
-                || ("/api/auth/login".equals(path) && "POST".equalsIgnoreCase(method))
-        ) {
+        // Sem header → segue o fluxo (Security decide se bloqueia)
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
-        // ============================================
 
+        String token = authHeader.substring(7);
 
-        try {
-            String authHeader = request.getHeader("Authorization");
+        // Blindagem contra lixo vindo do frontend
+        if (token.isBlank()
+                || "null".equalsIgnoreCase(token)
+                || "undefined".equalsIgnoreCase(token)) {
 
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-                if (jwtUtil.validateToken(token)) {
-                    String username = jwtUtil.getUsernameFromToken(token);
+        // Token inválido → segue (Security vai retornar 401)
+        if (!jwtUtil.validateToken(token)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        String email = jwtUtil.getUsernameFromToken(token);
 
-                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        if (email != null
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                        if (userDetails != null) {
-                            UsernamePasswordAuthenticationToken authToken =
-                                    new UsernamePasswordAuthenticationToken(
-                                            userDetails, null, userDetails.getAuthorities());
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(email);
 
-                            authToken.setDetails(
-                                    new WebAuthenticationDetailsSource().buildDetails(request)
-                            );
+            // 🔥 PRINCIPAL = UserModel (não String, não email)
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                            SecurityContextHolder.getContext().setAuthentication(authToken);
-                        }
-                    }
-                } else {
-                    logger.debug("JWT inválido para request {} {}", method, path);
-                }
-            } else {
-                logger.debug("Nenhum Authorization header presente para request {} {}", method, path);
-            }
-        } catch (Exception ex) {
-            logger.warn("Erro ao processar JWT: {}", ex.getMessage(), ex);
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
+
+            SecurityContextHolder
+                    .getContext()
+                    .setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);

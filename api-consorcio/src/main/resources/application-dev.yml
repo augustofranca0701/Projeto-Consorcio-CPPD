@@ -3,12 +3,18 @@ spring:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
   jwt:
-    # essa property será injetada pelo Spring a partir da env var JWT_SECRET
-    secret: ${JWT_SECRET}
-    # opcional: tempo de expiração (ms)
+    # lê direto do .env
+    secret: ${JWT_SECRET:change-this-secret-please-change}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true

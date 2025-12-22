@@ -1,5 +1,6 @@
+// src/app/services/api.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 
@@ -23,11 +24,15 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   // USERS
+
+  /**
+   * Hotfix: força envio do Authorization a partir do token salvo no localStorage.
+   * Isso protege a chamada inicial /users caso o interceptor não esteja registrado.
+   */
   getUsers() {
     const token = localStorage.getItem('token');
-    const options = token
-      ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
-      : {};
+    const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
+    const options = headers ? { headers } : {};
     return this.http.get<any[]>('http://localhost:8080/users', options);
   }
 
@@ -35,24 +40,30 @@ export class ApiService {
     return this.http.get<User>(`${this.api}/users/${id}`);
   }
 
-  /**
-   * Registra um usuário no backend.
-   * Retorno é do tipo any porque o backend devolve um Map com "message" ou erro.
-   */
   postSignUp(payload: any) {
     const base = this.baseUrl || 'http://localhost:8080';
     const url = `${base}/api/auth/register`;
     return this.http.post(url, payload);
   }
 
-
   /**
-   * Login (ajustado para o endpoint do backend)
+   * Login: observamos a resposta completa para capturar token em headers ou body.
    */
-  postLogin(body: any): Observable<any> {
-    return this.http.post<any>(`${this.api}/api/auth/login`, body);
+  postLogin(body: any): Observable<HttpResponse<any>> {
+    return this.http.post<any>(`${this.api}/api/auth/login`, body, { observe: 'response' });
   }
 
+  /**
+   * Endpoint que retorna dados do usuário autenticado com base no token (ou cookie).
+   * Útil no boot do app para validar/popular UserService.
+   */
+  getMe(): Observable<User> {
+    const token = localStorage.getItem('token');
+    const options = token
+      ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
+      : {};
+    return this.http.get<User>(`${this.api}/api/auth/me`, options);
+  }
 
   updateUser(data: UpdateUser, userId: number): Observable<UpdateUser> {
     return this.http.put<UpdateUser>(

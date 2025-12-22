@@ -1,68 +1,69 @@
 package com.consorcio.api.model;
 
-import com.fasterxml.jackson.annotation.*;
+import com.consorcio.api.domain.enums.GroupStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import jakarta.persistence.Entity;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
+@Table(name = "groups")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-@Table(name = "groups")
 public class GroupModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotEmpty
-    @NotBlank
-    String name;
+    @Column(nullable = false, unique = true)
+    private UUID uuid;
 
-    @NotNull
-    Long valorTotal;
+    @Column(nullable = false)
+    private String name;
 
-    @NotNull
-    Long valorParcelas;
+    @Column(name = "valor_total", nullable = false)
+    private Long valorTotal;
 
-    @NotNull(message = "Date cannot be null")
-    @DateTimeFormat(pattern = "dd-MM-yyyy")
-    LocalDate dataCriacao;
+    @Column(name = "valor_parcelas", nullable = false)
+    private Long valorParcelas;
 
-    @NotNull
-    int meses;
+    @Column(nullable = false)
+    private Integer meses;
 
-    @NotNull(message = "Date cannot be null")
-    @DateTimeFormat(pattern = "dd-MM-yyyy")
-    LocalDate dataFinal;
+    @Column(name = "quantidade_pessoas", nullable = false)
+    private Integer quantidadePessoas;
 
-    @NotNull
-    int quantidadePessoas;
+    @Column(name = "data_criacao", nullable = false)
+    private LocalDate dataCriacao;
 
-    @NotNull
-    boolean privado;
+    @Column(name = "data_final", nullable = false)
+    private LocalDate dataFinal;
 
-    Long createdBy;
+    @Column(nullable = false)
+    private Boolean privado = false;
 
-    @ManyToMany(mappedBy = "groups")
-    private List<UserModel> users = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GroupStatus status = GroupStatus.CRIADO;
 
-    @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL)
-    private List<PrizeModel> prizes = new ArrayList<>();
+    @Column(name = "created_by", nullable = false)
+    private Long createdBy;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
-    private List<PaymentModel> payments;
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.uuid = UUID.randomUUID();
+        this.createdAt = OffsetDateTime.now();
+    }
 }

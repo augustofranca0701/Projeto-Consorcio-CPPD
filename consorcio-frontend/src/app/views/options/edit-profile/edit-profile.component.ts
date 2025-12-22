@@ -13,12 +13,29 @@ import { Validators, FormControl, FormsModule, ReactiveFormsModule} from '@angul
 import { FormActionService } from "../../../services/formAction.service";
 import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarModule, MatSnackBarVerticalPosition} from '@angular/material/snack-bar';
 import { UserService } from '../../../services/user.service';
+
 @Component({
     selector: 'app-edit-profile',
     standalone: true,
     templateUrl: './edit-profile.component.html',
     styleUrl: './edit-profile.component.css',
-    imports: [MatFormFieldModule, HeaderMyGroupsComponent, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, RouterOutlet, RouterLink, RouterLinkActive, HeaderMyGroupsComponent, CommonModule,  HeaderAccountProfileComponent, MatSnackBarModule, FormsModule, ReactiveFormsModule,]
+    imports: [
+      MatFormFieldModule,
+      HeaderMyGroupsComponent,
+      MatFormFieldModule,
+      MatInputModule,
+      MatButtonModule,
+      MatIconModule,
+      RouterOutlet,
+      RouterLink,
+      RouterLinkActive,
+      HeaderMyGroupsComponent,
+      CommonModule,
+      HeaderAccountProfileComponent,
+      MatSnackBarModule,
+      FormsModule,
+      ReactiveFormsModule,
+    ]
 })
 export class EditProfileComponent implements OnInit{
 
@@ -63,13 +80,11 @@ export class EditProfileComponent implements OnInit{
   }
 
   obterDadosUsuario() {
-    // Obtém o usuário logado
-    let user = this.userService.getUser();
+    // obtém o id do usuário logado com segurança; redireciona para /login se necessário
+    const userId = this.userService.requireUserIdOrRedirect();
+    if (!userId) return;
 
-    // Verifica se tem usuário logado
-    if (user === undefined){this.router.navigate(['/login']);}
-
-    this.apiService.getUser(user.id!)
+    this.apiService.getUser(userId)
       .subscribe(dados => {
         this.dados = dados;
         this.name.setValue(this.dados.name);
@@ -78,16 +93,22 @@ export class EditProfileComponent implements OnInit{
         this.complement.setValue(this.dados.complement);
         this.state.setValue(this.dados.state);
         this.city.setValue(this.dados.city);
-  });
+      }, error => {
+        console.error('Erro ao obter dados do usuário:', error);
+        this.snackBar.open('Erro ao obter dados do usuário.', 'Fechar', {
+          horizontalPosition: this.horizontalPosition,
+          verticalPosition: this.verticalPosition,
+          duration: 3000
+        });
+      });
   }
 
-
   formatPhoneNumber(phone: string): string {
-    const match = phone.match(/^(\d{2})(\d{1})(\d{4})(\d{4})$/);
+    const match = phone?.match(/^(\d{2})(\d{1})(\d{4})(\d{4})$/);
     if (match) {
       return `(${match[1]}) ${match[2]} ${match[3]}-${match[4]}`;
     }
-    return phone;
+    return phone || '';
   }
 
   updateUser() {
@@ -102,11 +123,9 @@ export class EditProfileComponent implements OnInit{
       return;
     }
 
-    // Obtém o usuário logado
-    let user = this.userService.getUser();
-
-    // Verifica se tem usuário logado
-    if (user === undefined){this.router.navigate(['/login']);}
+    // obtém o id do usuário logado com segurança
+    const userId = this.userService.requireUserIdOrRedirect();
+    if (!userId) return;
 
     this.apiService.updateUser({
       name: nameValue,
@@ -115,8 +134,7 @@ export class EditProfileComponent implements OnInit{
       complement: complementValue,
       state: stateValue,
       city: cityValue
-    }, user.id!)
-
+    }, userId)
     .subscribe(
       () => {
         this.obterDadosUsuario();
@@ -127,6 +145,7 @@ export class EditProfileComponent implements OnInit{
         });
       },
       error => {
+        console.error('Erro ao atualizar perfil:', error);
         this.snackBar.open('Erro ao atualizar perfil.', 'Fechar', {
           horizontalPosition: this.horizontalPosition,
           verticalPosition: this.verticalPosition,
@@ -135,6 +154,7 @@ export class EditProfileComponent implements OnInit{
       }
     );
   }
+
   setDados(dado: User) {
     this.name.setValue (dado.name);
     this.phone.setValue  (dado.phone);
