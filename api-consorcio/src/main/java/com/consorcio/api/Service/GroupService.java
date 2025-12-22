@@ -1,247 +1,284 @@
 package com.consorcio.api.service;
 
+import com.consorcio.api.domain.enums.GroupRole;
+import com.consorcio.api.domain.enums.GroupStatus;
+import com.consorcio.api.domain.exception.*;
+import com.consorcio.api.dto.GroupDTO.*;
 import com.consorcio.api.model.GroupModel;
 import com.consorcio.api.model.UserModel;
 import com.consorcio.api.repository.GroupRepository;
-import com.consorcio.api.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class GroupService {
-    @Autowired
-    private GroupRepository groupRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final GroupRepository groupRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private PrizeService prizeService;
+    public GroupService(GroupRepository groupRepository, JdbcTemplate jdbcTemplate) {
+        this.groupRepository = groupRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
-    @Autowired
-    private PaymentService paymentService;
-
+    /* ======================================================
+       CREATE GROUP
+    ====================================================== */
     @Transactional
-    public ResponseEntity<?> create(Long userId, GroupModel group) {
-        try {
-            UserModel user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("User with id " + userId + " not found!"));
+    public GroupModel create(CreateGroupDTO dto, UserModel creator) {
 
-            group.setCreatedBy(userId);
-            user.getGroups().add(group);
+        GroupModel group = new GroupModel();
+        group.setName(dto.getNome());
+        group.setValorTotal(dto.getValorTotal());
+        group.setValorParcelas(dto.getValorParcelas());
+        group.setMeses(dto.getMeses());
+        group.setQuantidadePessoas(dto.getQuantidadePessoas());
+        group.setDataCriacao(dto.getDataCriacao());
+        group.setDataFinal(dto.getDataFinal());
+        group.setPrivado(dto.getPrivado());
+        group.setCreatedBy(creator.getId());
 
-            groupRepository.save(group);
-            userRepository.save(user);
+        GroupModel saved = groupRepository.save(group);
 
-            prizeService.createPrizesByGroup(group);
-            paymentService.createPaymentsByGroup(user, group);
+        jdbcTemplate.update("""
+            INSERT INTO user_group (user_id, group_id, role)
+            VALUES (?, ?, 'ADMIN')
+        """, creator.getId(), saved.getId());
 
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("message", "Group created successfully!");
-            return new ResponseEntity<>(errorResponse, HttpStatus.OK);
-        }
-        catch (Exception e)
-        {
-            // Handle other exceptions generically
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", 500);
-            errorResponse.put("message", "An error occurred while creating the group.");
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        audit(saved.getId(), "GROUP_CREATED", creator.getId());
+        return saved;
     }
 
+    /* ======================================================
+       LIST PUBLIC GROUPS
+    ====================================================== */
+    public List<GroupPublicResponseDTO> listPublicGroups() {
+        return jdbcTemplate.query("""
+            SELECT uuid, name, status
+            FROM groups
+            WHERE privado = false
+              AND status IN ('CRIADO','ATIVO')
+        """, (rs, i) ->
+            new GroupPublicResponseDTO(
+                UUID.fromString(rs.getString("uuid")),
+                rs.getString("name"),
+                GroupStatus.valueOf(rs.getString("status"))
+            )
+        );
+    }
+
+    /* ======================================================
+       LIST MY GROUPS
+    ====================================================== */
+    public List<MyGroupResponseDTO> listMyGroups(UserModel user) {
+        return jdbcTemplate.query("""
+            SELECT g.uuid, g.name, g.status, g.privado, ug.role
+            FROM user_group ug
+            JOIN groups g ON g.id = ug.group_id
+            WHERE ug.user_id = ?
+              AND g.status IN ('CRIADO','ATIVO')
+        """, (rs, i) ->
+            new MyGroupResponseDTO(
+                UUID.fromString(rs.getString("uuid")),
+                rs.getString("name"),
+                GroupStatus.valueOf(rs.getString("status")),
+                rs.getBoolean("privado"),
+                GroupRole.valueOf(rs.getString("role"))
+            ),
+            user.getId()
+        );
+    }
+
+    /* ======================================================
+       DETAIL
+    ====================================================== */
+    public GroupDetailResponseDTO getDetail(UUID uuid, UserModel user) {
+
+        GroupModel group = getGroup(uuid);
+
+        if (group.getPrivado()) {
+            assertParticipant(group.getId(), user.getId());
+        }
+
+        return new GroupDetailResponseDTO(
+            group.getUuid(),
+            group.getName(),
+            group.getValorTotal(),
+            group.getValorParcelas(),
+            group.getMeses(),
+            group.getQuantidadePessoas(),
+            group.getStatus(),
+            group.getPrivado()
+        );
+    }
+
+    /* ======================================================
+       UPDATE (ACTIVATE / PRIVATE)
+    ====================================================== */
     @Transactional
-    public ResponseEntity<Object> joinGroup(Long userId, Long groupId)
-    {
-        try
-        {
-            UserModel user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("User with id " + userId + " not found!"));
+    public GroupModel update(UUID uuid, UpdateGroupDTO dto, UserModel user) {
 
-            GroupModel group = groupRepository.findById(groupId)
-                    .orElseThrow(() -> new EntityNotFoundException("Group with id " + groupId + " not found!"));
+        GroupModel group = getGroup(uuid);
+        assertAdmin(group.getId(), user.getId());
 
-            // Check if the group is full
-            if (group.getUsers().size() >= group.getQuantidadePessoas())
-            {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", 409); // Conflict
-                errorResponse.put("message", "Group is full!");
-                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-            }
-
-            // Check if user is already in the group
-            if (user.getGroups().contains(group))
-            {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", 409); // Conflict
-                errorResponse.put("message", "User already joined this group!");
-                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-            }
-
-            user.getGroups().add(group);
-            userRepository.save(user);
-
-            paymentService.createPaymentsByGroup(user, group);
-
-            Map<String, Object> successResponse = new HashMap<>();
-            successResponse.put("message", "User successfully joined the group!");
-            return new ResponseEntity<>(successResponse, HttpStatus.OK);
+        if (group.getStatus() != GroupStatus.CRIADO) {
+            throw new InvalidStateDomainException("group_not_editable");
         }
-        catch (EntityNotFoundException e)
-        {
-            // Handle EntityNotFoundExceptions specifically
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", 404);
-            errorResponse.put("message", e.getMessage());
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+
+        if (dto.getPrivado() != null) {
+            group.setPrivado(dto.getPrivado());
         }
-        catch (Exception e)
-        {
-            // Handle other exceptions generically
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", 500); // Internal Server Error
-            errorResponse.put("message", "An error occurred while joining the group.");
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        if (dto.getStatus() == GroupStatus.ATIVO) {
+            assertGroupFull(group.getId(), group.getQuantidadePessoas());
+            group.setStatus(GroupStatus.ATIVO);
+            audit(group.getId(), "GROUP_ACTIVATED", user.getId());
         }
+
+        return groupRepository.save(group);
     }
 
+    /* ======================================================
+       CANCEL
+    ====================================================== */
     @Transactional
-    public ResponseEntity<Object> leaveGroup(Long userId, Long groupId)
-    {
-        try
-        {
-            // Find user and group
-            UserModel user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("User with id " + userId + " not found!"));
+    public GroupModel cancel(UUID uuid, UserModel user) {
 
-            GroupModel group = groupRepository.findById(groupId)
-                    .orElseThrow(() -> new EntityNotFoundException("Group with id " + groupId + " not found!"));
+        GroupModel group = getGroup(uuid);
+        assertAdmin(group.getId(), user.getId());
 
-            // Check if user is already in the group (optional)
-            if (!user.getGroups().contains(group)) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", 404);
-                errorResponse.put("message", "User is not currently a member of this group!");
-                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-            }
-
-            // Check if user is the group creator (optional)
-            if (userId.equals(group.getCreatedBy()))
-            {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", 403); // Forbidden
-                errorResponse.put("message", "Group creator cannot leave the group!");
-                return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-            }
-
-            // Remove the group from the user's groups
-            user.getGroups().remove(group);
-            userRepository.save(user);
-
-            // Leave successful, return success message
-            Map<String, Object> successResponse = new HashMap<>();
-            successResponse.put("message", "User successfully left the group!");
-            return new ResponseEntity<>(successResponse, HttpStatus.OK);
+        if (group.getStatus() != GroupStatus.CRIADO) {
+            throw new ConflictDomainException("group_cannot_be_deleted");
         }
-        catch (EntityNotFoundException e)
-        {
-            // Handle EntityNotFoundExceptions specifically
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", 404);
-            errorResponse.put("message", e.getMessage());
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+
+        Integer members = jdbcTemplate.queryForObject("""
+            SELECT COUNT(*) FROM user_group WHERE group_id = ?
+        """, Integer.class, group.getId());
+
+        if (members != null && members > 1) {
+            throw new ConflictDomainException("group_cannot_be_deleted");
         }
-        catch (Exception e)
-        {
-            // Handle other exceptions generically
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", 500); // Internal Server Error
-            errorResponse.put("message", "An error occurred while leaving the group.");
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
+        group.setStatus(GroupStatus.CANCELADO);
+        audit(group.getId(), "GROUP_CANCELLED", user.getId());
+
+        return groupRepository.save(group);
     }
 
-    public List<GroupModel> readGroup() throws Exception
-    {
-        return groupRepository.findAll();
-    }
-
-    public ResponseEntity<Object> readById(long id)
-    {
-        Optional<GroupModel> grupoPesquisado = groupRepository.findById(id);
-
-        if (grupoPesquisado.isEmpty())
-        {
-            // Group not found, return error message
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", 404);
-            errorResponse.put("message", "Group not found!");
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-        }
-
-        // Group found, return the group object (modify as needed)
-        return new ResponseEntity<>(grupoPesquisado.get(), HttpStatus.OK);
-    }
-
+    /* ======================================================
+       FINALIZE
+    ====================================================== */
     @Transactional
-    public ResponseEntity<Object> delete(Long userId, Long groupId)
-    {
-        try
-        {
-            // Find user and group
-            UserModel user = userRepository.findById(userId)
-                    .orElseThrow(() -> new EntityNotFoundException("User with id " + userId + " not found!"));
+    public GroupModel finalizeGroup(UUID uuid, UserModel user) {
 
-            GroupModel group = groupRepository.findById(groupId)
-                    .orElseThrow(() -> new EntityNotFoundException("Group with id " + groupId + " not found!"));
+        GroupModel group = getGroup(uuid);
+        assertAdmin(group.getId(), user.getId());
 
-            boolean groupAdmin = userId.equals(group.getCreatedBy());
-
-            // Check if user is or not the group creator
-            if (!groupAdmin)
-            {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", 403); // Forbidden
-                errorResponse.put("message", "Only group creator can delete the group!");
-                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-            }
-            else
-            {
-                if (group.getUsers().size() > 1) {
-                    Map<String, Object> errorResponse = new HashMap<>();
-                    errorResponse.put("error", 403); // Forbidden
-                    errorResponse.put("message", "Group creator cannot delete the group while other users are in the group!");
-                    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-                }
-            }
-
-            // Remove the group from the user's groups
-            user.getGroups().remove(group);
-            userRepository.save(user);
-
-            groupRepository.deleteById(groupId);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("message", "Group deleted successfully!");
-            return new ResponseEntity<>(errorResponse, HttpStatus.OK);
+        if (group.getStatus() != GroupStatus.ATIVO) {
+            throw new ConflictDomainException("group_cannot_be_finalized");
         }
-        catch (EntityNotFoundException e)
-        {
-            // Handle EntityNotFoundExceptions specifically
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", 404);
-            errorResponse.put("message", e.getMessage());
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+
+        group.setStatus(GroupStatus.FINALIZADO);
+        audit(group.getId(), "GROUP_FINALIZED", user.getId());
+
+        return groupRepository.save(group);
+    }
+
+    /* ======================================================
+       TRANSFER ADMIN
+    ====================================================== */
+    @Transactional
+    public void transferAdmin(UUID groupUuid, UUID newAdminUuid, UserModel currentAdmin) {
+
+        GroupModel group = getGroup(groupUuid);
+
+        if (group.getStatus() != GroupStatus.CRIADO &&
+            group.getStatus() != GroupStatus.ATIVO) {
+            throw new InvalidStateDomainException("cannot_transfer_admin");
         }
+
+        assertAdmin(group.getId(), currentAdmin.getId());
+
+        Long newAdminId = jdbcTemplate.queryForObject("""
+            SELECT id FROM users WHERE uuid = ?
+        """, Long.class, newAdminUuid);
+
+        if (newAdminId == null) {
+            throw new NotFoundDomainException("user_not_found");
+        }
+
+        Boolean isParticipant = jdbcTemplate.queryForObject("""
+            SELECT COUNT(*) > 0 FROM user_group
+            WHERE group_id = ? AND user_id = ?
+        """, Boolean.class, group.getId(), newAdminId);
+
+        if (!Boolean.TRUE.equals(isParticipant)) {
+            throw new ConflictDomainException("user_not_in_group");
+        }
+
+        jdbcTemplate.update("""
+            UPDATE user_group
+            SET role = 'MEMBER'
+            WHERE group_id = ? AND user_id = ?
+        """, group.getId(), currentAdmin.getId());
+
+        jdbcTemplate.update("""
+            UPDATE user_group
+            SET role = 'ADMIN'
+            WHERE group_id = ? AND user_id = ?
+        """, group.getId(), newAdminId);
+
+        audit(group.getId(), "ADMIN_TRANSFERRED", currentAdmin.getId());
+    }
+
+    /* ======================================================
+       HELPERS
+    ====================================================== */
+    private GroupModel getGroup(UUID uuid) {
+        return groupRepository.findByUuid(uuid)
+                .orElseThrow(() -> new NotFoundDomainException("group_not_found"));
+    }
+
+    private void assertAdmin(Long groupId, Long userId) {
+        Boolean ok = jdbcTemplate.queryForObject("""
+            SELECT COUNT(*) > 0 FROM user_group
+            WHERE group_id = ? AND user_id = ? AND role = 'ADMIN'
+        """, Boolean.class, groupId, userId);
+
+        if (!Boolean.TRUE.equals(ok)) {
+            throw new ForbiddenDomainException("forbidden");
+        }
+    }
+
+    private void assertParticipant(Long groupId, Long userId) {
+        Boolean ok = jdbcTemplate.queryForObject("""
+            SELECT COUNT(*) > 0 FROM user_group
+            WHERE group_id = ? AND user_id = ?
+        """, Boolean.class, groupId, userId);
+
+        if (!Boolean.TRUE.equals(ok)) {
+            throw new ForbiddenDomainException("forbidden");
+        }
+    }
+
+    private void assertGroupFull(Long groupId, Integer limit) {
+        Integer count = jdbcTemplate.queryForObject("""
+            SELECT COUNT(*) FROM user_group WHERE group_id = ?
+        """, Integer.class, groupId);
+
+        if (count == null || count < limit) {
+            throw new ConflictDomainException("group_not_full");
+        }
+    }
+
+    private void audit(Long groupId, String action, Long userId) {
+        jdbcTemplate.update("""
+            INSERT INTO audit_logs (group_id, action, performed_by)
+            VALUES (?, ?, ?)
+        """, groupId, action, userId);
     }
 }

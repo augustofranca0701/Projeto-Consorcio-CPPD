@@ -1,37 +1,60 @@
 package com.consorcio.api.controller;
 
+import com.consorcio.api.dto.PrizeDTO.PrizeResponseDTO;
+import com.consorcio.api.model.UserModel;
 import com.consorcio.api.service.PrizeService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("prizes")
-public class PrizeController
-{
-    @Autowired
-    private PrizeService prizeService;
+@RequestMapping("/api")
+public class PrizeController {
 
-    @PostMapping("/sort/{groupId}")
-    public ResponseEntity<Map<String, Object>> sortUserForPrize(@PathVariable("groupId") Long groupId)
-    {
-        return prizeService.sortUserForPrize(groupId);
+    private final PrizeService prizeService;
+
+    public PrizeController(PrizeService prizeService) {
+        this.prizeService = prizeService;
     }
 
-
-    // Apenas para Teste
-
-    @GetMapping("/next/{groupId}")
-    public ResponseEntity<Object> nextPrizeDate(@PathVariable("groupId") Long groupId)
-    {
-        return prizeService.findFirstAvailablePrizeByGroupId(groupId);
+    /* ======================================================
+       REGISTER PRIZE
+       POST /api/groups/{uuid}/prizes
+    ====================================================== */
+    @PostMapping("/groups/{groupUuid}/prizes")
+    public PrizeResponseDTO create(
+            @PathVariable UUID groupUuid,
+            @RequestParam UUID userUuid,
+            @RequestParam LocalDate datePrize,
+            @AuthenticationPrincipal UserModel admin
+    ) {
+        return prizeService.registerPrize(groupUuid, userUuid, datePrize, admin);
     }
 
-    @GetMapping("/user/{groupId}")
-    public ResponseEntity<Object> usersWithoutPrize(@PathVariable("groupId") Long groupId)
-    {
-        return prizeService.getUsersWithoutPrizes(groupId);
+    /* ======================================================
+       LIST PRIZES (GROUP)
+       GET /api/groups/{uuid}/prizes
+    ====================================================== */
+    @GetMapping("/groups/{groupUuid}/prizes")
+    public List<PrizeResponseDTO> list(
+            @PathVariable UUID groupUuid,
+            @AuthenticationPrincipal UserModel user
+    ) {
+        return prizeService.listGroupPrizes(groupUuid, user);
+    }
+
+    /* ======================================================
+       GET PRIZE BY UUID
+       GET /api/prizes/{uuid}
+    ====================================================== */
+    @GetMapping("/prizes/{prizeUuid}")
+    public PrizeResponseDTO getByUuid(
+            @PathVariable UUID prizeUuid,
+            @AuthenticationPrincipal UserModel user
+    ) {
+        return prizeService.getPrize(prizeUuid, user);
     }
 }

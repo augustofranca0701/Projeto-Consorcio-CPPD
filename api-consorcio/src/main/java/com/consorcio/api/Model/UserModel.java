@@ -1,134 +1,100 @@
 package com.consorcio.api.model;
 
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.time.Instant;
-import java.util.ArrayList;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-public class UserModel {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(of = "id")
+public class UserModel implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(columnDefinition = "uuid", unique = true, updatable = false)
-    private UUID uuid = UUID.randomUUID();
+    @Column(nullable = false, unique = true)
+    private UUID uuid;
 
-    @Column(length = 255)
+    @NotBlank
     private String name;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Email
+    @NotBlank
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @JsonIgnore
+    @NotBlank
     @Column(nullable = false)
     private String password;
 
-    @Column(unique = true, length = 20)
     private String cpf;
-
-    @Column(unique = true, length = 50)
     private String phone;
-
-    @Column(length = 255)
     private String address;
-
-    @Column(length = 128)
     private String city;
-
-    @Column(length = 64)
     private String state;
-
-    @Column(length = 255)
     private String complement;
 
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt = Instant.now();
+    // =========================
+    // NOVO — ROLE DE SISTEMA
+    // =========================
+    @Column(name = "system_role", nullable = false)
+    private String systemRole = "USER"; // USER | SYSTEM_ADMIN
+
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private OffsetDateTime updatedAt;
 
     @Column(name = "deleted_at")
-    private Instant deletedAt;
+    private OffsetDateTime deletedAt;
 
-    // ADICIONADO: relacionamento Many-to-Many com GroupModel
-    @ManyToMany
-    @JoinTable(
-        name = "user_group",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "group_id")
-    )
-    private List<GroupModel> groups = new ArrayList<>();
+    @PrePersist
+    protected void onCreate() {
+        this.uuid = UUID.randomUUID();
+        this.createdAt = OffsetDateTime.now();
 
-    public UserModel() {}
-
-    public UserModel(Long id, UUID uuid, String name, String email, String password, String cpf, String phone,
-                     String address, String city, String state, String complement,
-                     Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        this.id = id;
-        this.uuid = uuid;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.cpf = cpf;
-        this.phone = phone;
-        this.address = address;
-        this.city = city;
-        this.state = state;
-        this.complement = complement;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
+        if (this.systemRole == null) {
+            this.systemRole = "USER";
+        }
     }
 
-    // Getters e Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
 
-    public UUID getUuid() { return uuid; }
-    public void setUuid(UUID uuid) { this.uuid = uuid; }
+    @Override
+    public String getUsername() {
+        return email;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    @Override
+    public boolean isEnabled() {
+        return deletedAt == null;
+    }
 
-    @JsonIgnore
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public String getCpf() { return cpf; }
-    public void setCpf(String cpf) { this.cpf = cpf; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
-
-    public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
-
-    public String getState() { return state; }
-    public void setState(String state) { this.state = state; }
-
-    public String getComplement() { return complement; }
-    public void setComplement(String complement) { this.complement = complement; }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
-
-    public Instant getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
-
-    public List<GroupModel> getGroups() { return groups; }
-    public void setGroups(List<GroupModel> groups) { this.groups = groups; }
+    // =========================
+    // NOVO — HELPER
+    // =========================
+    public boolean isSystemAdmin() {
+        return "SYSTEM_ADMIN".equals(this.systemRole);
+    }
 }

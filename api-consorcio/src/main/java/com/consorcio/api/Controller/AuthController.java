@@ -4,17 +4,17 @@ import com.consorcio.api.dto.UserDTO.RegisterDTO;
 import com.consorcio.api.dto.UserDTO.UserLoginDTO;
 import com.consorcio.api.dto.UserDTO.UserResponseDTO;
 import com.consorcio.api.model.UserModel;
-import com.consorcio.api.security.AppUserPrincipal;
 import com.consorcio.api.security.JwtUtil;
 import com.consorcio.api.service.UserService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -23,28 +23,28 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final UserService userService;
     private final JwtUtil jwtUtil;
 
     public AuthController(
-            UserService userService,
-            AuthenticationManager authenticationManager,
-            JwtUtil jwtUtil
+        AuthenticationManager authenticationManager,
+        UserService userService,
+        JwtUtil jwtUtil
     ) {
-        this.userService = userService;
         this.authenticationManager = authenticationManager;
+        this.userService = userService;
         this.jwtUtil = jwtUtil;
     }
 
-    // ================= REGISTER =================
+    /* =======================
+       REGISTER
+    ======================== */
+
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterDTO dto) {
-
-        if (dto == null || dto.getEmail() == null || dto.getPassword() == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
+    public ResponseEntity<UserResponseDTO> register(
+        @Valid @RequestBody RegisterDTO dto
+    ) {
         UserModel user = new UserModel();
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
@@ -52,63 +52,52 @@ public class AuthController {
         user.setCpf(dto.getCpf());
         user.setPhone(dto.getPhone());
         user.setAddress(dto.getAddress());
-        user.setComplement(dto.getComplement());
         user.setCity(dto.getCity());
         user.setState(dto.getState());
+        user.setComplement(dto.getComplement());
 
         UserModel created = userService.create(user);
 
-        UserResponseDTO response = new UserResponseDTO();
-        response.setId(created.getId());
-        response.setUuid(created.getUuid());
-        response.setName(created.getName());
-        response.setEmail(created.getEmail());
-        response.setCreatedAt(created.getCreatedAt());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(new UserResponseDTO(created));
     }
 
-    // ================= LOGIN =================
+    /* =======================
+       LOGIN
+    ======================== */
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserLoginDTO dto) {
+    public ResponseEntity<Map<String, Object>> login(
+        @Valid @RequestBody UserLoginDTO dto
+    ) {
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                dto.getEmail(),
+                dto.getPassword()
+            )
+        );
 
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            dto.getEmail(),
-                            dto.getPassword()
-                    )
-            );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            String token = jwtUtil.generateToken(dto.getEmail());
+        UserModel user = (UserModel) authentication.getPrincipal();
 
-            return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "type", "Bearer"
-            ));
+        String token = jwtUtil.generateToken(user.getEmail());
 
-        } catch (AuthenticationException e) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "invalid_credentials"));
-        }
+        return ResponseEntity.ok(
+            Map.of(
+                "token", token,
+                "user", new UserResponseDTO(user)
+            )
+        );
     }
 
-    // ================= ME =================
+    /* =======================
+       ME
+    ======================== */
+
     @GetMapping("/me")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserResponseDTO> me(Authentication authentication) {
-
-        AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
-        UserModel user = principal.getUser();
-
-        UserResponseDTO dto = new UserResponseDTO();
-        dto.setId(user.getId());
-        dto.setUuid(user.getUuid());
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        dto.setCreatedAt(user.getCreatedAt());
-
-        return ResponseEntity.ok(dto);
+        UserModel user = (UserModel) authentication.getPrincipal();
+        return ResponseEntity.ok(new UserResponseDTO(user));
     }
 }
