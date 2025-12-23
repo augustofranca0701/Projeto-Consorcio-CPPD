@@ -1,12 +1,12 @@
 package com.consorcio.api.controller;
 
+import com.consorcio.api.dto.PrizeDTO.PrizeCreateRequestDTO;
 import com.consorcio.api.dto.PrizeDTO.PrizeResponseDTO;
 import com.consorcio.api.model.UserModel;
 import com.consorcio.api.service.PrizeService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,11 +27,15 @@ public class PrizeController {
     @PostMapping("/groups/{groupUuid}/prizes")
     public PrizeResponseDTO create(
             @PathVariable UUID groupUuid,
-            @RequestParam UUID userUuid,
-            @RequestParam LocalDate datePrize,
+            @RequestBody PrizeCreateRequestDTO dto,
             @AuthenticationPrincipal UserModel admin
     ) {
-        return prizeService.registerPrize(groupUuid, userUuid, datePrize, admin);
+        return prizeService.registerPrize(
+                groupUuid,
+                dto.getUserUuid(),
+                dto.getDatePrize(),
+                admin
+        );
     }
 
     /* ======================================================

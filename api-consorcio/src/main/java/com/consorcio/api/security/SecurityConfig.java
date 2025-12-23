@@ -30,29 +30,22 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // API stateless → CSRF desligado
             .csrf(csrf -> csrf.disable())
 
-            // Sem sessão
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // Handler padrão de 401
             .exceptionHandling(ex ->
                 ex.authenticationEntryPoint(unauthorizedHandler)
             )
 
-            // Regras de autorização
             .authorizeHttpRequests(auth -> auth
-                // AUTH sempre público
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-
-                // qualquer outra rota exige token
                 .anyRequest().authenticated()
             );
 
-        // JWT entra antes do filtro padrão
         http.addFilterBefore(
                 jwtFilter,
                 UsernamePasswordAuthenticationFilter.class

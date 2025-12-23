@@ -47,11 +47,8 @@ public class UserModel implements UserDetails {
     private String state;
     private String complement;
 
-    // =========================
-    // NOVO — ROLE DE SISTEMA
-    // =========================
     @Column(name = "system_role", nullable = false)
-    private String systemRole = "USER"; // USER | SYSTEM_ADMIN
+    private String systemRole = "USER";
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -66,7 +63,6 @@ public class UserModel implements UserDetails {
     protected void onCreate() {
         this.uuid = UUID.randomUUID();
         this.createdAt = OffsetDateTime.now();
-
         if (this.systemRole == null) {
             this.systemRole = "USER";
         }
@@ -82,18 +78,20 @@ public class UserModel implements UserDetails {
         return email;
     }
 
-    @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return true; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
 
     @Override
     public boolean isEnabled() {
         return deletedAt == null;
     }
 
-    // =========================
-    // NOVO — HELPER
-    // =========================
     public boolean isSystemAdmin() {
         return "SYSTEM_ADMIN".equals(this.systemRole);
     }

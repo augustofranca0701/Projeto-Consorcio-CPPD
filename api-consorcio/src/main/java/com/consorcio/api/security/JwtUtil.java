@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -18,45 +19,54 @@ public class JwtUtil {
             @Value("${spring.jwt.secret}") String secret,
             @Value("${spring.jwt.expiration-ms:86400000}") long expirationMs
     ) {
+
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT secret NÃO pode ser vazio ou nulo");
+        }
+
         String adjustedSecret = adjustSecret(secret);
-        this.key = Keys.hmacShaKeyFor(adjustedSecret.getBytes());
+        this.key = Keys.hmacShaKeyFor(adjustedSecret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
 
         System.out.println("====================================");
-        System.out.println(" JWT SECRET CARREGADO ");
-        System.out.println(" Tamanho: " + adjustedSecret.length() + " chars");
-        System.out.println(" SHA-256 (Base64): " +
-                java.util.Base64.getEncoder().encodeToString(key.getEncoded()));
+        System.out.println(" JWT SECRET CARREGADO COM SUCESSO ");
+        System.out.println(" Tamanho (chars): " + adjustedSecret.length());
+        System.out.println(" Tamanho (bytes): " + adjustedSecret.getBytes(StandardCharsets.UTF_8).length);
         System.out.println(" Expiração: " + expirationMs + "ms");
         System.out.println("====================================");
     }
 
     public String generateToken(String subject) {
-        if (subject == null) subject = "unknown";
+        if (subject == null || subject.isBlank()) {
+            throw new IllegalArgumentException("Subject do token não pode ser vazio");
+        }
 
         long now = System.currentTimeMillis();
-        Date issuedAt = new Date(now);
-        Date expiry = new Date(now + expirationMs);
 
         return Jwts.builder()
                 .setSubject(subject)
-                .setIssuedAt(issuedAt)
-                .setExpiration(expiry)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean validateToken(String token) {
-        return validateToken(token, null);
-    }
-
-    public boolean validateToken(String token, String ignored) {
         if (token == null || token.isBlank()) return false;
 
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
             return true;
+
+        } catch (ExpiredJwtException ex) {
+            System.out.println("JWT expirado");
+            return false;
+
         } catch (JwtException | IllegalArgumentException ex) {
+            System.out.println("JWT inválido: " + ex.getMessage());
             return false;
         }
     }
@@ -65,27 +75,24 @@ public class JwtUtil {
         if (token == null || token.isBlank()) return null;
 
         try {
-            Claims claims = Jwts.parserBuilder()
+            return Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
-                    .getBody();
-            return claims.getSubject();
+                    .getBody()
+                    .getSubject();
+
         } catch (JwtException | IllegalArgumentException ex) {
+            System.out.println("Erro ao extrair subject do JWT: " + ex.getMessage());
             return null;
         }
     }
 
     private static String adjustSecret(String secret) {
-        if (secret == null || secret.isBlank()) {
-            secret = "change-this-secret-to-a-long-one";
-        }
-
         StringBuilder sb = new StringBuilder(secret);
-        while (sb.toString().getBytes().length < 32) {
+        while (sb.toString().getBytes(StandardCharsets.UTF_8).length < 32) {
             sb.append("0");
         }
-
         return sb.toString();
     }
 }

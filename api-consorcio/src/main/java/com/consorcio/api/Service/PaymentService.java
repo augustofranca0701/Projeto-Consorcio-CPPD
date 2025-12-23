@@ -94,7 +94,7 @@ public class PaymentService {
        MARK AS PAID
     ====================================================== */
     @Transactional
-    public void markAsPaid(UUID paymentUuid, UserModel admin) {
+    public PaymentModel markAsPaid(UUID paymentUuid, UserModel admin) {
 
         PaymentModel payment = paymentRepository.findByUuid(paymentUuid)
                 .orElseThrow(() -> new NotFoundDomainException("payment_not_found"));
@@ -109,15 +109,18 @@ public class PaymentService {
 
         payment.setIsPaid(true);
         payment.setPaidAt(OffsetDateTime.now());
-        paymentRepository.save(payment);
+
+        PaymentModel saved = paymentRepository.save(payment);
 
         jdbcTemplate.update("""
             INSERT INTO payment_history
             (payment_id, action, old_value, new_value, performed_by)
             VALUES (?, 'MARKED_AS_PAID', false, true, ?)
-        """, payment.getId(), admin.getId());
+        """, saved.getId(), admin.getId());
 
         audit(group.getId(), "PAYMENT_MARKED_AS_PAID", admin.getId());
+
+        return saved;
     }
 
     /* ======================================================

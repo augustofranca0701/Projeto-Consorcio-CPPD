@@ -13,8 +13,8 @@ public class PrizeModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private UUID uuid = UUID.randomUUID();
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uuid;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "group_id")
@@ -26,6 +26,16 @@ public class PrizeModel {
 
     @Column(name = "date_prize", nullable = false)
     private LocalDate datePrize;
+
+    /* =======================
+       JPA CALLBACK
+    ======================= */
+    @PrePersist
+    protected void onCreate() {
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID();
+        }
+    }
 
     /* =======================
        GETTERS
